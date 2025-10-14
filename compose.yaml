@@ -24,8 +24,8 @@
     depends_on:
       - sge.postgres # Démarre Postgres avant l'API (ordre, pas garantie de readiness)
     environment:
-      ASPNETCORE_ENVIRONMENT: Development
-      ConnectionStrings__DefaultConnection: "Host=sge.postgres;Database=sgedb;Username=sgeuser;Password=sgepassword"
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection="Host=sge.postgres;Database=sgedb;Username=sgeuser;Password=sgepassword"
     networks:
       - sge_network
 
