@@ -1,4 +1,5 @@
 ﻿namespace SGE.Core.Entities;
+
 public abstract class BaseEntity
 {
     /// <summary>

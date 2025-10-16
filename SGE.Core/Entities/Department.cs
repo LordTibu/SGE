@@ -1,4 +1,5 @@
 ﻿namespace SGE.Core.Entities;
+
 public class Department : BaseEntity
 {
     /// <summary>
