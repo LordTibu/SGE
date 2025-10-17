@@ -9,7 +9,7 @@ namespace SGE.API.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/[controller]")]
-public class EmployeesController(IEmployeeService employeeService) :
+public class EmployeesController(IEmployeeService employeeService, IExcelExportService excelExportService) :
     ControllerBase
 {
     /// <summary>
@@ -136,5 +136,19 @@ public class EmployeesController(IEmployeeService employeeService) :
             return NotFound();
 
         return NoContent();
+    }
+    
+    /// <summary>
+    /// Exports all employees to an Excel file.
+    /// </summary>
+    /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+    /// <returns>An Excel file containing all employee data.</returns>
+    [HttpGet("export/excel")]
+    public async Task<IActionResult> ExportToExcel(CancellationToken cancellationToken)
+    {
+        var fileBytes = await excelExportService.ExportEmployeesToExcelAsync(cancellationToken);
+        var fileName = $"Employes_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
+        
+        return File(fileBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",fileName);
     }
 }
