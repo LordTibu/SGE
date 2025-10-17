@@ -50,4 +50,8 @@ public class Employee : BaseEntity
     /// Gets or sets the collection of leave requests associated with the employee.
     /// </summary>
     public virtual ICollection<LeaveRequest> LeaveRequests { get; set; } = new List<LeaveRequest>();
+    /// <summary>
+    /// Gets or sets the status of the employee (e.g., Active, Inactive, OnLeave).
+    /// </summary>
+    public string Status { get; set; } = "Active";
 }
