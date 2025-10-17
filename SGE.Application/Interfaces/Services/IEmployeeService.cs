@@ -1,4 +1,5 @@
-﻿using SGE.Application.DTOs.Employees;
+﻿using SGE.Application.DTOs;
+using SGE.Application.DTOs.Employees;
 
 namespace SGE.Application.Interfaces.Services;
 
@@ -84,4 +85,14 @@ public interface IEmployeeService
     /// </returns>
     Task<bool> DeleteAsync(int id, CancellationToken cancellationToken =
         default);
+
+    /// <summary>
+    /// Imports employees from an Excel file stream asynchronously.
+    /// </summary>
+    /// <param name="fileStream">The Excel file stream to import from.</param>
+    /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+    /// <returns>
+    /// A task that represents the asynchronous operation. The task result contains the import result with created count and any errors.
+    /// </returns>
+    Task<ImportResultDto> ImportFromExcelAsync(Stream fileStream, CancellationToken cancellationToken = default);
 }
