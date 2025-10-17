@@ -23,17 +23,16 @@ public class ExcelExportService(IEmployeeRepository employeeRepository) : IExcel
         var worksheet = workbook.Worksheets.Add("Employés");
 
         // Définir les en-têtes avec style
-        worksheet.Cell(1, 1).Value = "ID";
-        worksheet.Cell(1, 2).Value = "Prénom";
-        worksheet.Cell(1, 3).Value = "Nom";
-        worksheet.Cell(1, 4).Value = "Email";
-        worksheet.Cell(1, 5).Value = "Téléphone";
-        worksheet.Cell(1, 6).Value = "Adresse";
-        worksheet.Cell(1, 7).Value = "Poste";
-        worksheet.Cell(1, 8).Value = "Salaire";
-        worksheet.Cell(1, 9).Value = "Date d'embauche";
-        worksheet.Cell(1, 10).Value = "Département ID";
-        worksheet.Cell(1, 11).Value = "Statut";
+        worksheet.Cell(1, 1).Value = "firstName";
+        worksheet.Cell(1, 2).Value = "lastName";
+        worksheet.Cell(1, 3).Value = "email";
+        worksheet.Cell(1, 4).Value = "PhoneNumber";
+        worksheet.Cell(1, 5).Value = "address";
+        worksheet.Cell(1, 6).Value = "position";
+        worksheet.Cell(1, 7).Value = "salary";
+        worksheet.Cell(1, 8).Value = "hireDate";
+        worksheet.Cell(1, 9).Value = "departmentId";
+        worksheet.Cell(1, 10).Value = "Status";
 
         // Styliser les en-têtes
         var headerRange = worksheet.Range(1, 1, 1, 11);
@@ -46,24 +45,23 @@ public class ExcelExportService(IEmployeeRepository employeeRepository) : IExcel
         int row = 2;
         foreach (var emp in employees)
         {
-            worksheet.Cell(row, 1).Value = emp.Id;
-            worksheet.Cell(row, 2).Value = emp.FirstName;
-            worksheet.Cell(row, 3).Value = emp.LastName;
-            worksheet.Cell(row, 4).Value = emp.Email;
-            worksheet.Cell(row, 5).Value = emp.PhoneNumber;
-            worksheet.Cell(row, 6).Value = emp.Address;
-            worksheet.Cell(row, 7).Value = emp.Position;
-            worksheet.Cell(row, 8).Value = emp.Salary;
-            worksheet.Cell(row, 8).Style.NumberFormat.Format = "#,##0.00 €";
-            worksheet.Cell(row, 9).Value = emp.HireDate;
-            worksheet.Cell(row, 9).Style.DateFormat.Format = "dd/mm/yyyy";
-            worksheet.Cell(row, 10).Value = emp.DepartmentId;
-            worksheet.Cell(row, 11).Value = emp.Status;
+            worksheet.Cell(row, 1).Value = emp.FirstName;
+            worksheet.Cell(row, 2).Value = emp.LastName;
+            worksheet.Cell(row, 3).Value = emp.Email;
+            worksheet.Cell(row, 4).Value = emp.PhoneNumber;
+            worksheet.Cell(row, 5).Value = emp.Address;
+            worksheet.Cell(row, 6).Value = emp.Position;
+            worksheet.Cell(row, 7).Value = emp.Salary;
+            worksheet.Cell(row, 7).Style.NumberFormat.Format = "#,##0.00 €";
+            worksheet.Cell(row, 8).Value = emp.HireDate;
+            worksheet.Cell(row, 8).Style.DateFormat.Format = "dd/mm/yyyy";
+            worksheet.Cell(row, 9).Value = emp.DepartmentId;
+            worksheet.Cell(row, 10).Value = emp.Status;
             row++;
         }
 
         // Ajouter des bordures à toutes les cellules de données
-        var dataRange = worksheet.Range(1, 1, row - 1, 11);
+        var dataRange = worksheet.Range(1, 1, row - 1, 10);
         dataRange.Style.Border.InsideBorder = XLBorderStyleValues.Thin;
         dataRange.Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
 
