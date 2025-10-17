@@ -1,4 +1,7 @@
 ﻿using AutoMapper;
+using ClosedXML.Excel;
+using Microsoft.Extensions.Logging;
+using SGE.Application.DTOs;
 using SGE.Application.DTOs.Employees;
 using SGE.Application.Interfaces.Repositories;
 using SGE.Application.Interfaces.Services;
@@ -9,7 +12,8 @@ namespace SGE.Application.Services;
 public class EmployeeService(
     IEmployeeRepository employeeRepository,
     IDepartmentRepository departmentRepository,
-    IMapper mapper) :
+    IMapper mapper,
+    ILogger<EmployeeService> logger) :
     IEmployeeService
 {
     /// <summary>
@@ -120,5 +124,240 @@ public class EmployeeService(
 
         await employeeRepository.DeleteAsync(entity.Id, cancellationToken);
         return true;
+    }
+
+    /// <summary>
+    /// Imports employees from an Excel file stream asynchronously.
+    /// </summary>
+    /// <param name="fileStream">The Excel file stream to import from.</param>
+    /// <param name="cancellationToken">Token to monitor for cancellation requests.</param>
+    /// <returns>A task that represents the asynchronous operation. The task result contains the import result with created count and any errors.</returns>
+    public async Task<ImportResultDto> ImportFromExcelAsync(Stream fileStream, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            logger.LogInformation("Starting employees import from Excel");
+            using var workbook = new XLWorkbook(fileStream);
+            var ws = workbook.Worksheets.Worksheet(1);
+            var result = new ImportResultDto();
+
+            // Vérification des en-têtes
+            var expectedHeaders = new[] { "FirstName", "LastName", "Email", "PhoneNumber", "Address", "Position", "Salary", "HireDate", "DepartmentId" };
+            var actualHeaders = new string[9];
+            for (int i = 1; i <= 9; i++)
+            {
+                actualHeaders[i - 1] = ws.Cell(1, i).GetString();
+            }
+            
+            var missingHeaders = new List<string>();
+            for (int i = 0; i < expectedHeaders.Length; i++)
+            {
+                if (string.IsNullOrWhiteSpace(actualHeaders[i]) || !actualHeaders[i].Equals(expectedHeaders[i], StringComparison.OrdinalIgnoreCase))
+                {
+                    missingHeaders.Add($"Colonne {GetColumnLetter(i + 1)}: attendu '{expectedHeaders[i]}', reçu '{actualHeaders[i]}'");
+                }
+            }
+            
+            if (missingHeaders.Any())
+            {
+                return new ImportResultDto
+                {
+                    CreatedCount = 0,
+                    Errors = new List<ImportErrorDto>
+                    {
+                        new() { RowNumber = 1, Message = $"En-têtes incorrects: {string.Join("; ", missingHeaders)}" }
+                    }
+                };
+            }
+
+            // Expect header row at row 1
+            var firstDataRow = 2;
+            var lastRow = ws.LastRowUsed()?.RowNumber() ?? 1;
+            logger.LogInformation("Worksheet: {SheetName}, lastRow: {LastRow}", ws.Name, lastRow);
+
+            for (var rowNum = firstDataRow; rowNum <= lastRow; rowNum++)
+            {
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    logger.LogWarning("Import cancelled at row {RowNum}", rowNum);
+                    break;
+                }
+
+                try
+                {
+                    var row = ws.Row(rowNum);
+                    
+                    // Vérification des colonnes obligatoires avec messages clairs
+                    var firstName = row.Cell(1).GetString();
+                    var lastName = row.Cell(2).GetString();
+                    var email = row.Cell(3).GetString();
+                    
+                    // Vérification des champs requis
+                    var missingFields = new List<string>();
+                    if (string.IsNullOrWhiteSpace(firstName)) missingFields.Add("FirstName (colonne A)");
+                    if (string.IsNullOrWhiteSpace(lastName)) missingFields.Add("LastName (colonne B)");
+                    if (string.IsNullOrWhiteSpace(email)) missingFields.Add("Email (colonne C)");
+                    
+                    if (missingFields.Any())
+                    {
+                        result.Errors.Add(new ImportErrorDto { 
+                            RowNumber = rowNum, 
+                            Message = $"Colonnes manquantes ou vides: {string.Join(", ", missingFields)}" 
+                        });
+                        continue;
+                    }
+                    
+                    // Vérification de l'email dupliqué AVANT de traiter les autres champs
+                    var exists = await employeeRepository.GetByEmailAsync(email, cancellationToken);
+                    if (exists != null)
+                    {
+                        result.Errors.Add(new ImportErrorDto { 
+                            RowNumber = rowNum, 
+                            Message = $"L'employé avec l'email '{email}' existe déjà dans la base de données" 
+                        });
+                        continue;
+                    }
+                    
+                    // Lecture des autres champs avec gestion d'erreurs
+                    var phone = row.Cell(4).GetString();
+                    var address = row.Cell(5).GetString();
+                    var position = row.Cell(6).GetString();
+                    
+                    // Vérification du salaire
+                    decimal salary;
+                    try
+                    {
+                        salary = row.Cell(7).GetValue<decimal>();
+                        if (salary < 0)
+                        {
+                            result.Errors.Add(new ImportErrorDto { 
+                                RowNumber = rowNum, 
+                                Message = "Le salaire (colonne G) doit être un nombre positif" 
+                            });
+                            continue;
+                        }
+                    }
+                    catch
+                    {
+                        result.Errors.Add(new ImportErrorDto { 
+                            RowNumber = rowNum, 
+                            Message = "Le salaire (colonne G) doit être un nombre valide (ex: 50000)" 
+                        });
+                        continue;
+                    }
+                    
+                    // Vérification de la date d'embauche
+                    DateTime hireDate;
+                    try
+                    {
+                        hireDate = DateTime.SpecifyKind(row.Cell(8).GetValue<DateTime>(), DateTimeKind.Utc);
+                        if (hireDate > DateTime.UtcNow)
+                        {
+                            result.Errors.Add(new ImportErrorDto { 
+                                RowNumber = rowNum, 
+                                Message = "La date d'embauche (colonne H) ne peut pas être dans le futur" 
+                            });
+                            continue;
+                        }
+                    }
+                    catch
+                    {
+                        result.Errors.Add(new ImportErrorDto { 
+                            RowNumber = rowNum, 
+                            Message = "La date d'embauche (colonne H) doit être une date valide (ex: 2023-01-15)" 
+                        });
+                        continue;
+                    }
+                    
+                    // Vérification du DepartmentId
+                    int departmentId;
+                    try
+                    {
+                        departmentId = row.Cell(9).GetValue<int>();
+                        if (departmentId <= 0)
+                        {
+                            result.Errors.Add(new ImportErrorDto { 
+                                RowNumber = rowNum, 
+                                Message = $"L'ID du département (colonne I) doit être un nombre positif (reçu: {departmentId})" 
+                            });
+                            continue;
+                        }
+                    }
+                    catch
+                    {
+                        result.Errors.Add(new ImportErrorDto { 
+                            RowNumber = rowNum, 
+                            Message = "L'ID du département (colonne I) doit être un nombre entier valide (ex: 1, 2, 3...)" 
+                        });
+                        continue;
+                    }
+                    
+                    // Vérification que le département existe
+                    var department = await departmentRepository.GetByIdAsync(departmentId, cancellationToken);
+                    if (department == null)
+                    {
+                        result.Errors.Add(new ImportErrorDto { 
+                            RowNumber = rowNum, 
+                            Message = $"Le département avec l'ID {departmentId} n'existe pas dans la base de données" 
+                        });
+                        continue;
+                    }
+
+                    // Création de l'entité
+                    var entity = new Employee
+                    {
+                        FirstName = firstName,
+                        LastName = lastName,
+                        Email = email,
+                        PhoneNumber = phone,
+                        Address = address,
+                        Position = position,
+                        Salary = salary,
+                        HireDate = hireDate,
+                        DepartmentId = departmentId,
+                        CreatedBy = "System Import",
+                        UpdatedBy = "System Import"
+                    };
+
+                    await employeeRepository.AddAsync(entity, cancellationToken);
+                    result.CreatedCount++;
+                    logger.LogInformation("Row {RowNum} imported: {Email}", rowNum, email);
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "Error importing row {RowNum}", rowNum);
+                    var errorMessage = ex.InnerException?.Message ?? ex.Message;
+                    result.Errors.Add(new ImportErrorDto { RowNumber = rowNum, Message = $"Erreur: {errorMessage}" });
+                    // continue with next row
+                }
+            }
+
+            logger.LogInformation("Employees import completed. Created: {Count}", result.CreatedCount);
+            return result;
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Unhandled error during Excel import");
+            return new ImportResultDto
+            {
+                CreatedCount = 0,
+                Errors = new List<ImportErrorDto>
+                {
+                    new() { RowNumber = 0, Message = $"Erreur globale: {ex.Message}" }
+                }
+            };
+        }
+    }
+
+    private static string GetColumnLetter(int columnNumber)
+    {
+        string columnLetter = "";
+        while (columnNumber > 0)
+        {
+            columnNumber--;
+            columnLetter = (char)('A' + columnNumber % 26) + columnLetter;
+            columnNumber /= 26;
+        }
+        return columnLetter;
     }
 }

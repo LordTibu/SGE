@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using SGE.Application.DTOs;
 using SGE.Application.DTOs.Employees;
 using SGE.Application.Interfaces.Services;
 
@@ -137,4 +138,22 @@ public class EmployeesController(IEmployeeService employeeService) :
 
         return NoContent();
     }
+
+    /// <summary>
+    /// Imports employees from an Excel file.
+    /// </summary>
+    /// <param name="file">The Excel file containing employee data.</param>
+    /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+    /// <returns>
+    /// An asynchronous task that returns an action result containing the import result with created count and any errors.
+    /// </returns>
+    [HttpPost("import")]
+    public async Task<IActionResult> Import([FromForm] IFormFile file, CancellationToken cancellationToken)
+    {
+        if (file == null || file.Length == 0) return BadRequest("No file provided");
+        using var stream = file.OpenReadStream();
+        var result = await employeeService.ImportFromExcelAsync(stream, cancellationToken);
+        return Ok(new { message = "Import terminé", created = result.CreatedCount, errors = result.Errors });
+    }
+
 }
