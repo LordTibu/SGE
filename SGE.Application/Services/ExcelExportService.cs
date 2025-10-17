@@ -35,7 +35,7 @@ public class ExcelExportService(IEmployeeRepository employeeRepository) : IExcel
         worksheet.Cell(1, 10).Value = "Status";
 
         // Styliser les en-têtes
-        var headerRange = worksheet.Range(1, 1, 1, 11);
+        var headerRange = worksheet.Range(1, 1, 1, 10);
         headerRange.Style.Font.Bold = true;
         headerRange.Style.Fill.BackgroundColor = XLColor.LightBlue;
         headerRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
