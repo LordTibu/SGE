@@ -1,14 +1,14 @@
 ﻿namespace SGE.Application.Interfaces.Services;
 
 /// <summary>
-/// Interface for Excel export operations.
+/// Interface pour les opérations d'exportation Excel.
 /// </summary>
 public interface IExcelExportService
 {
     /// <summary>
-    /// Exports employees data to an Excel file.
+    /// Exporte les données des employés vers un fichier Excel.
     /// </summary>
-    /// <param name="cancellationToken">Token to monitor for cancellation requests.</param>
-    /// <returns>A byte array containing the Excel file data.</returns>
+    /// <param name="cancellationToken">Jeton pour surveiller les demandes d'annulation.</param>
+    /// <returns>Un tableau d'octets contenant les données du fichier Excel.</returns>
     Task<byte[]> ExportEmployeesToExcelAsync(CancellationToken cancellationToken = default);
 }

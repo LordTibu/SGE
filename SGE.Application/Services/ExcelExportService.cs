@@ -5,15 +5,15 @@ using SGE.Application.Interfaces.Services;
 namespace SGE.Application.Services;
 
 /// <summary>
-/// Service responsible for exporting data to Excel files using ClosedXML.
+/// Service responsable de l'exportation des données vers des fichiers Excel en utilisant ClosedXML.
 /// </summary>
 public class ExcelExportService(IEmployeeRepository employeeRepository) : IExcelExportService
 {
     /// <summary>
-    /// Exports all employees to an Excel file.
+    /// Exporte tous les employés vers un fichier Excel.
     /// </summary>
-    /// <param name="cancellationToken">Token to monitor for cancellation requests.</param>
-    /// <returns>A byte array containing the Excel file data.</returns>
+    /// <param name="cancellationToken">Jeton pour surveiller les demandes d'annulation.</param>
+    /// <returns>Un tableau d'octets contenant les données du fichier Excel.</returns>
     public async Task<byte[]> ExportEmployeesToExcelAsync(CancellationToken cancellationToken = default)
     {
         // Récupérer tous les employés
@@ -70,7 +70,7 @@ public class ExcelExportService(IEmployeeRepository employeeRepository) : IExcel
         // Auto-ajuster les colonnes
         worksheet.Columns().AdjustToContents();
 
-        // Retourner le fichier Excel en byte array
+        // Retourner le fichier Excel en tableau d'octets
         using var stream = new MemoryStream();
         workbook.SaveAs(stream);
         return stream.ToArray();
