@@ -61,7 +61,8 @@ public class EmployeeService(
     /// <param name="departmentId">The unique identifier of the department whose employees should be retrieved.</param>
     /// <param name="cancellationToken">Token to monitor for cancellation requests.</param>
     /// <returns>A task that represents the asynchronous operation. The task result contains a collection of EmployeeDto objects associated with the specified department.</returns>
-    public async Task<IEnumerable<EmployeeDto>> GetByDepartmentAsync(int departmentId, CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<EmployeeDto>> GetByDepartmentAsync(int departmentId,
+        CancellationToken cancellationToken = default)
     {
         var list = await employeeRepository.GetByDepartmentAsync(departmentId, cancellationToken);
         return mapper.Map<IEnumerable<EmployeeDto>>(list);
@@ -74,8 +75,7 @@ public class EmployeeService(
     /// <param name="cancellationToken">Token to monitor for cancellation requests.</param>
     /// <returns>A task that represents the asynchronous operation. The task result contains the created EmployeeDto object.</returns>
     /// <exception cref="ApplicationException">Thrown if the specified department does not exist or if the email is already associated with another employee.</exception>
-    public async Task<EmployeeDto> CreateAsync(EmployeeCreateDto dto,
-        CancellationToken cancellationToken = default)
+    public async Task<EmployeeDto> CreateAsync(EmployeeCreateDto dto, CancellationToken cancellationToken = default)
     {
         var department = await
             departmentRepository.GetByIdAsync(dto.DepartmentId, cancellationToken);
@@ -97,10 +97,13 @@ public class EmployeeService(
     /// <param name="dto">An object containing the updated details of the employee.</param>
     /// <param name="cancellationToken">Token to monitor for cancellation requests.</param>
     /// <returns>A task that represents the asynchronous operation. The task result indicates whether the update operation was successful.</returns>
-    public async Task<bool> UpdateAsync(int id, EmployeeUpdateDto dto,
-        CancellationToken cancellationToken = default)
+    public async Task<bool> UpdateAsync(int id, EmployeeUpdateDto dto, CancellationToken cancellationToken = default)
     {
-        // TODO
+        var entity = await employeeRepository.GetByIdAsync(id, cancellationToken);
+        if (entity == null) return false;
+
+        mapper.Map(dto, entity);
+        await employeeRepository.UpdateAsync(entity, cancellationToken);
         return true;
     }
 
@@ -110,10 +113,12 @@ public class EmployeeService(
     /// <param name="id">The unique identifier of the employee to be deleted.</param>
     /// <param name="cancellationToken">Token to monitor for cancellation requests.</param>
     /// <returns>A task that represents the asynchronous operation. The task result contains a boolean value indicating whether the deletion was successful.</returns>
-    public async Task<bool> DeleteAsync(int id, CancellationToken
-        cancellationToken = default)
+    public async Task<bool> DeleteAsync(int id, CancellationToken cancellationToken = default)
     {
-        // TODO
+        var entity = await employeeRepository.GetByIdAsync(id, cancellationToken);
+        if (entity == null) return false;
+
+        await employeeRepository.DeleteAsync(entity.Id, cancellationToken);
         return true;
     }
 }
