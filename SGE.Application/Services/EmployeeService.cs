@@ -349,6 +349,60 @@ public class EmployeeService(
         }
     }
 
+    /// <summary>
+    /// Exports all employees to an Excel file.
+    /// </summary>
+    /// <param name="cancellationToken">Token to monitor for cancellation requests.</param>
+    /// <returns>A byte array containing the Excel file data.</returns>
+    public async Task<byte[]> ExportToExcelAsync(CancellationToken cancellationToken = default)
+    {
+        // Récupérer tous les employés
+        var employees = await employeeRepository.GetAllAsync(cancellationToken);
+
+        using var workbook = new XLWorkbook();
+        var worksheet = workbook.Worksheets.Add("Employés");
+
+        // Définir les en-têtes avec style
+        worksheet.Cell(1, 1).Value = "Nom complet";
+        worksheet.Cell(1, 2).Value = "Email";
+        worksheet.Cell(1, 3).Value = "Position";
+        worksheet.Cell(1, 4).Value = "Salaire";
+        worksheet.Cell(1, 5).Value = "Département";
+
+        // Styliser les en-têtes
+        var headerRange = worksheet.Range(1, 1, 1, 5);
+        headerRange.Style.Font.Bold = true;
+        headerRange.Style.Fill.BackgroundColor = XLColor.LightBlue;
+        headerRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+        headerRange.Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
+
+        // Remplir les données
+        int row = 2;
+        foreach (var emp in employees)
+        {
+            var empDto = mapper.Map<EmployeeDto>(emp);
+            worksheet.Cell(row, 1).Value = empDto.FullName;
+            worksheet.Cell(row, 2).Value = empDto.Email;
+            worksheet.Cell(row, 3).Value = empDto.Position;
+            worksheet.Cell(row, 4).Value = empDto.Salary;
+            worksheet.Cell(row, 4).Style.NumberFormat.Format = "#,##0.00 €";
+            worksheet.Cell(row, 5).Value = empDto.DepartmentName;
+            row++;
+        }
+
+        // Ajouter des bordures à toutes les cellules de données
+        var dataRange = worksheet.Range(1, 1, row - 1, 5);
+        dataRange.Style.Border.InsideBorder = XLBorderStyleValues.Thin;
+        dataRange.Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
+
+        // Auto-ajuster les colonnes
+        worksheet.Columns().AdjustToContents();
+
+        // Retourner le fichier Excel en tableau d'octets
+        using var stream = new MemoryStream();
+        workbook.SaveAs(stream);
+        return stream.ToArray();
+    }
     private static string GetColumnLetter(int columnNumber)
     {
         string columnLetter = "";
