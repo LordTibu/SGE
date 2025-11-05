@@ -1,6 +1,6 @@
 ﻿services:
   sge.postgres:
-    image: postgres:latest # Utilise la dernière version de l'image officielle PostgreSQL
+    image: postgres:17-alpine
     container_name: sge_postgres
     environment:
       POSTGRES_DB: sgedb
