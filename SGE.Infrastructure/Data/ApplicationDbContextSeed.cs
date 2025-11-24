@@ -50,6 +50,31 @@ public static class ApplicationDbContextSeed
                 await userManager.AddToRoleAsync(adminUser, "Admin");
             }
         }
+
+        // Créer l'utilisateur manager s'il n'existe pas
+        var managerEmail = "manager@example.com";
+        var managerUser = await userManager.FindByEmailAsync(managerEmail);
+
+        if (managerUser == null)
+        {
+            managerUser = new ApplicationUser
+            {
+                UserName = "manager",
+                Email = managerEmail,
+                FirstName = "Manager",
+                LastName = "Manager",
+                EmailConfirmed = true,
+                IsActive = true,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            var result = await userManager.CreateAsync(managerUser, "Manager123!");
+
+            if (result.Succeeded)
+            {
+                await userManager.AddToRoleAsync(managerUser, "Manager");
+            }
+        }
     }
 }
 
