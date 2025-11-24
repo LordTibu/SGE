@@ -88,10 +88,22 @@ public class GlobalExceptionHandlingMiddleware
                 400,
                 traceId),
 
+            KeyNotFoundException => ErrorResponse.Create(
+                "La ressource demandée est introuvable.",
+                "NOT_FOUND",
+                404,
+                traceId),
+
             UnauthorizedAccessException => ErrorResponse.Create(
                 "Accès non autorisé.",
                 "UNAUTHORIZED",
                 401,
+                traceId),
+
+            InvalidOperationException => ErrorResponse.Create(
+                "L'opération demandée n'est pas valide dans ce contexte.",
+                "INVALID_OPERATION",
+                409,
                 traceId),
 
             NotImplementedException => ErrorResponse.Create(
