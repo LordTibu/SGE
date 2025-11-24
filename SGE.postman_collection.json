@@ -199,6 +199,149 @@
           ]}}]
         }
       ]
+    },
+    {
+      "name": "LeaveRequests",
+      "item": [
+        {
+          "name": "POST Create Leave Request",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "url": "{{baseUrl}}/api/LeaveRequests",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"employeeId\": 1,\n  \"leaveType\": 1,\n  \"startDate\": \"2025-12-15T00:00:00Z\",\n  \"endDate\": \"2025-12-20T00:00:00Z\",\n  \"reason\": \"Vacances de fin d'année\"\n}"
+            }
+          },
+          "event": [{"listen": "test", "script": {"type": "text/javascript", "exec": [
+            "pm.expect([201,404,400,409]).to.include(pm.response.code);"
+          ]}}]
+        },
+        {
+          "name": "GET Leave Request by Id",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/LeaveRequests/1"
+          },
+          "event": [{"listen": "test", "script": {"type": "text/javascript", "exec": [
+            "pm.expect([200,404]).to.include(pm.response.code);"
+          ]}}]
+        },
+        {
+          "name": "GET Leave Requests by Employee",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/LeaveRequests/employee/1"
+          },
+          "event": [{"listen": "test", "script": {"type": "text/javascript", "exec": [
+            "pm.test('Status is 200', function () { pm.response.to.have.status(200); });"
+          ]}}]
+        },
+        {
+          "name": "GET Leave Requests by Status (Pending)",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/LeaveRequests/status/1"
+          },
+          "event": [{"listen": "test", "script": {"type": "text/javascript", "exec": [
+            "pm.test('Status is 200', function () { pm.response.to.have.status(200); });"
+          ]}}]
+        },
+        {
+          "name": "GET Leave Requests by Status (Approved)",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/LeaveRequests/status/2"
+          },
+          "event": [{"listen": "test", "script": {"type": "text/javascript", "exec": [
+            "pm.test('Status is 200', function () { pm.response.to.have.status(200); });"
+          ]}}]
+        },
+        {
+          "name": "GET Pending Leave Requests",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/LeaveRequests/pending"
+          },
+          "event": [{"listen": "test", "script": {"type": "text/javascript", "exec": [
+            "pm.test('Status is 200', function () { pm.response.to.have.status(200); });"
+          ]}}]
+        },
+        {
+          "name": "PUT Approve Leave Request",
+          "request": {
+            "method": "PUT",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "url": "{{baseUrl}}/api/LeaveRequests/1/status",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": 2,\n  \"managerComments\": \"Approuvé - Bonnes vacances !\"\n}"
+            }
+          },
+          "event": [{"listen": "test", "script": {"type": "text/javascript", "exec": [
+            "pm.expect([204,404,400]).to.include(pm.response.code);"
+          ]}}]
+        },
+        {
+          "name": "PUT Reject Leave Request",
+          "request": {
+            "method": "PUT",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "url": "{{baseUrl}}/api/LeaveRequests/1/status",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": 3,\n  \"managerComments\": \"Rejeté - Période trop chargée\"\n}"
+            }
+          },
+          "event": [{"listen": "test", "script": {"type": "text/javascript", "exec": [
+            "pm.expect([204,404,400]).to.include(pm.response.code);"
+          ]}}]
+        },
+        {
+          "name": "GET Remaining Leave Days",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/LeaveRequests/employee/1/remaining/2025"
+          },
+          "event": [{"listen": "test", "script": {"type": "text/javascript", "exec": [
+            "pm.expect([200,404]).to.include(pm.response.code);"
+          ]}}]
+        },
+        {
+          "name": "GET Check Conflicts",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/LeaveRequests/employee/1/conflicts?startDate=2025-12-15T00:00:00Z&endDate=2025-12-20T00:00:00Z",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "LeaveRequests", "employee", "1", "conflicts"],
+              "query": [
+                {"key": "startDate", "value": "2025-12-15T00:00:00Z"},
+                {"key": "endDate", "value": "2025-12-20T00:00:00Z"}
+              ]
+            }
+          },
+          "event": [{"listen": "test", "script": {"type": "text/javascript", "exec": [
+            "pm.test('Status is 200', function () { pm.response.to.have.status(200); });"
+          ]}}]
+        },
+        {
+          "name": "POST Create Sick Leave",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "url": "{{baseUrl}}/api/LeaveRequests",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"employeeId\": 1,\n  \"leaveType\": 2,\n  \"startDate\": \"2025-11-25T00:00:00Z\",\n  \"endDate\": \"2025-11-27T00:00:00Z\",\n  \"reason\": \"Grippe\"\n}"
+            }
+          },
+          "event": [{"listen": "test", "script": {"type": "text/javascript", "exec": [
+            "pm.expect([201,404,400,409]).to.include(pm.response.code);"
+          ]}}]
+        }
+      ]
     }
   ]
 }
