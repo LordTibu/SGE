@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SGE.Application.DTOs.LeaveRequests;
 using SGE.Application.Interfaces.Services;
@@ -11,6 +12,7 @@ namespace SGE.API.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/[controller]")]
+[Authorize] // Tous les endpoints nécessitent une authentification
 public class LeaveRequestsController(ILeaveRequestService leaveRequestService) : ControllerBase
 {
     /// <summary>
@@ -74,6 +76,7 @@ public class LeaveRequestsController(ILeaveRequestService leaveRequestService) :
     /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
     /// <returns>Returns a collection of leave requests with the specified status.</returns>
     [HttpGet("status/{status}")]
+    [Authorize(Roles = "Admin,Manager")] // Seuls Admin/Manager peuvent filtrer par statut
     [ProducesResponseType(200, Type = typeof(IEnumerable<LeaveRequestDto>))]
     public async Task<ActionResult<IEnumerable<LeaveRequestDto>>> GetLeaveRequestsByStatus(
         LeaveStatus status,
@@ -89,6 +92,7 @@ public class LeaveRequestsController(ILeaveRequestService leaveRequestService) :
     /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
     /// <returns>Returns a collection of pending leave requests.</returns>
     [HttpGet("pending")]
+    [Authorize(Roles = "Admin,Manager")] // Seuls Admin/Manager peuvent voir les demandes en attente
     [ProducesResponseType(200, Type = typeof(IEnumerable<LeaveRequestDto>))]
     public async Task<ActionResult<IEnumerable<LeaveRequestDto>>> GetPendingLeaveRequests(CancellationToken cancellationToken)
     {
@@ -104,6 +108,7 @@ public class LeaveRequestsController(ILeaveRequestService leaveRequestService) :
     /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
     /// <returns>Returns no content if the update was successful.</returns>
     [HttpPut("{id:int}/status")]
+    [Authorize(Roles = "Admin,Manager")] // Seuls Admin/Manager peuvent approuver/rejeter
     [ProducesResponseType(204)]
     [ProducesResponseType(400)]
     [ProducesResponseType(404)]
