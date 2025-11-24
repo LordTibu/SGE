@@ -3,6 +3,7 @@ using SGE.Application.DTOs.Attendances;
 using SGE.Application.Interfaces.Repositories;
 using SGE.Application.Interfaces.Services;
 using SGE.Core.Entities;
+using SGE.Core.Exceptions;
 
 namespace SGE.Application.Services
 {
@@ -24,15 +25,15 @@ namespace SGE.Application.Services
         /// <param name="clockInDto">An object containing the employee's ID and clock-in time information.</param>
         /// <param name="cancellationToken">A token to observe during the asynchronous operation for cancellation.</param>
         /// <returns>A DTO containing the attendance details after the clock-in operation.</returns>
-        /// <exception cref="KeyNotFoundException">Thrown when the employee is not found.</exception>
-        /// <exception cref="InvalidOperationException">Thrown when the employee has already clocked in on the same day.</exception>
+        /// <exception cref="EmployeeNotFoundException">Thrown when the employee is not found.</exception>
+        /// <exception cref="AlreadyClockedInException">Thrown when the employee has already clocked in on the same day.</exception>
         public async Task<AttendanceDto> ClockInAsync(
             ClockInOutDto clockInDto,
             CancellationToken cancellationToken = default
         )
         {
             if (!await employeeRepository.ExistsAsync(clockInDto.EmployeeId, cancellationToken))
-                throw new KeyNotFoundException($"Employee with ID {clockInDto.EmployeeId} not found");
+                throw new EmployeeNotFoundException(clockInDto.EmployeeId);
 
             var date = clockInDto.DateTime.Date;
             var time = clockInDto.DateTime.TimeOfDay;
@@ -47,7 +48,7 @@ namespace SGE.Application.Services
             if (attendance != null)
             {
                 if (attendance.ClockIn.HasValue)
-                    throw new InvalidOperationException("Employee has already clocked in today");
+                    throw new AlreadyClockedInException(clockInDto.EmployeeId);
 
                 attendance.ClockIn = time;
                 attendance.Notes = (string.IsNullOrEmpty(attendance.Notes) ? "" : attendance.Notes + "; ") + clockInDto.Notes;
@@ -88,7 +89,7 @@ namespace SGE.Application.Services
         {
             // Vérifier que l'employé existe
             if (!await employeeRepository.ExistsAsync(clockOutDto.EmployeeId, cancellationToken))
-                throw new KeyNotFoundException($"Employee with ID {clockOutDto.EmployeeId} not found");
+                throw new EmployeeNotFoundException(clockOutDto.EmployeeId);
 
             var date = clockOutDto.DateTime.Date;
             var time = clockOutDto.DateTime.TimeOfDay;
@@ -101,13 +102,13 @@ namespace SGE.Application.Services
             var attendance = existingAttendances.FirstOrDefault();
 
             if (attendance == null)
-                throw new InvalidOperationException("No clock-in record found for today");
+                throw new NotClockedInException(clockOutDto.EmployeeId);
 
             if (!attendance.ClockIn.HasValue)
-                throw new InvalidOperationException("Employee must clock in before clocking out");
+                throw new NotClockedInException(clockOutDto.EmployeeId);
 
             if (attendance.ClockOut.HasValue)
-                throw new InvalidOperationException("Employee has already clocked out today");
+                throw new AttendanceAlreadyClockedOutException(clockOutDto.EmployeeId);
 
             attendance.ClockOut = time;
             attendance.Notes += (string.IsNullOrEmpty(attendance.Notes) ? "" : "; ") + clockOutDto.Notes;
@@ -135,7 +136,7 @@ namespace SGE.Application.Services
         {
             // Vérifier que l'employé existe
             if (!await employeeRepository.ExistsAsync(createAttendanceDto.EmployeeId, cancellationToken))
-                throw new KeyNotFoundException($"Employee with ID {createAttendanceDto.EmployeeId} not found");
+                throw new EmployeeNotFoundException(createAttendanceDto.EmployeeId);
 
             var date = DateTime.SpecifyKind(createAttendanceDto.Date.Date, DateTimeKind.Utc);
 
@@ -145,7 +146,7 @@ namespace SGE.Application.Services
                 cancellationToken
             );
             if (existing.Any())
-                throw new InvalidOperationException("An attendance record for this date already exists");
+                throw new AttendanceRecordExistsException(createAttendanceDto.EmployeeId, date);
 
             var entity = mapper.Map<Attendance>(createAttendanceDto);
             entity.Date = date;

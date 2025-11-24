@@ -3,6 +3,7 @@ using SGE.Application.DTOs;
 using SGE.Application.Interfaces.Repositories;
 using SGE.Application.Interfaces.Services;
 using SGE.Core.Entities;
+using SGE.Core.Exceptions;
 
 namespace SGE.Application.Services;
 
@@ -51,16 +52,17 @@ public class DepartmentService : IDepartmentService
     /// <param name="dto">The data transfer object containing the details of the department to be created.</param>
     /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
     /// <returns>The created department data transfer object.</returns>
-    /// <exception cref="ApplicationException">Thrown if the department name or code already exists.</exception>
+    /// <exception cref="DuplicateDepartmentNameException">Thrown if the department name already exists.</exception>
+    /// <exception cref="DuplicateDepartmentCodeException">Thrown if the department code already exists.</exception>
     public async Task<DepartmentDto> CreateAsync(DepartmentCreateDto dto, CancellationToken cancellationToken = default)
     {
         var existingName = await _departmentRepository.GetByNameAsync(dto.Name, cancellationToken);
         if (existingName != null)
-            throw new ApplicationException("Department name already exists");
+            throw new DuplicateDepartmentNameException(dto.Name);
 
         var existingCode = await _departmentRepository.GetByCodeAsync(dto.Code, cancellationToken);
         if (existingCode != null)
-            throw new ApplicationException("Department code already exists");
+            throw new DuplicateDepartmentCodeException(dto.Code);
 
         var entity = _mapper.Map<Department>(dto);
         await _departmentRepository.AddAsync(entity, cancellationToken);
