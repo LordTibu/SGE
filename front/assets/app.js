@@ -3,7 +3,8 @@ const apiBaseInput = document.querySelector("#api-base");
 const saveBaseButton = document.querySelector("#save-base");
 const form = document.querySelector("#employee-form");
 const formStatus = document.querySelector("#form-status");
-const attendanceExportLink = document.querySelector("#attendance-export");
+
+const attendanceDateInput = document.querySelector("#attendance-date");
 
 const employeesTable = document.querySelector("#employees-table tbody");
 const departmentsTable = document.querySelector("#departments-table tbody");
@@ -14,14 +15,17 @@ const state = {
 };
 
 apiBaseInput.value = state.baseUrl;
-attendanceExportLink.href = `${state.baseUrl}/api/Attendances/export/excel`;
+
+// set default attendance date to today (YYYY-MM-DD)
+if (attendanceDateInput) {
+  attendanceDateInput.value = new Date().toISOString().split("T")[0];
+}
 
 saveBaseButton.addEventListener("click", () => {
   const value = apiBaseInput.value.trim();
   if (!value) return;
   state.baseUrl = value;
   localStorage.setItem("sge:baseUrl", value);
-  attendanceExportLink.href = `${value}/api/Attendances/export/excel`;
   toast("API base URL updated.");
 });
 
@@ -52,9 +56,9 @@ async function loadEmployees() {
         (emp) => `
           <tr>
             <td>${emp.id}</td>
-            <td>${emp.firstName} ${emp.lastName}</td>
+            <td>${emp.fullName}</td>
             <td>${emp.email}</td>
-            <td>${emp.departmentId}</td>
+            <td>${emp.departmentName}</td>
             <td>${emp.position}</td>
             <td>${emp.salary}</td>
           </tr>
@@ -94,7 +98,8 @@ async function loadDepartments() {
 async function loadAttendances() {
   try {
     setPlaceholder(attendancesTable, "Loading...");
-    const attendances = await fetchJson(`${state.baseUrl}/api/Attendances`);
+    const date = attendanceDateInput?.value || new Date().toISOString().split("T")[0];
+    const attendances = await fetchJson(`${state.baseUrl}/api/Attendances/date/${date}`);
     if (!attendances.length) {
       setPlaceholder(attendancesTable, "No attendances found.");
       return;
@@ -107,7 +112,7 @@ async function loadAttendances() {
             <td>${att.id}</td>
             <td>${att.employeeId}</td>
             <td>${att.date?.split("T")[0] ?? ""}</td>
-            <td>${att.status}</td>
+            <td>${att.clockIn} "/" ${att.clockOut}</td>
             <td>${att.notes ?? ""}</td>
           </tr>
         `,

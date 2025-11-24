@@ -89,8 +89,8 @@
           <p>Check in on attendance records and export data to Excel.</p>
         </div>
         <div class="actions">
+          <input id="attendance-date" type="date" />
           <button data-action="refresh-attendances" class="primary">Refresh list</button>
-          <a id="attendance-export" class="secondary" href="#" rel="noopener noreferrer">Export Excel</a>
         </div>
       </div>
       <div class="table-wrapper">
@@ -100,7 +100,7 @@
               <th>ID</th>
               <th>Employee ID</th>
               <th>Date</th>
-              <th>Status</th>
+              <th>In/Out</th>
               <th>Notes</th>
             </tr>
           </thead>
@@ -163,10 +163,6 @@
       </form>
     </section>
   </main>
-
-  <footer class="footer">
-    <p>Tip: run the API and frontend together via Docker Compose. The UI defaults to the API port mapping <code>5000</code>.</p>
-  </footer>
 
   <script src="./assets/app.js"></script>
 </body>
