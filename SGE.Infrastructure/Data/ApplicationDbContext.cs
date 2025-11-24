@@ -33,6 +33,7 @@ public class ApplicationDbContext : DbContext
             entity.Property(e => e.LastName).IsRequired().HasMaxLength(50);
             entity.Property(e => e.Email).IsRequired().HasMaxLength(100);
             entity.Property(e => e.Salary).HasColumnType("decimal(18,2)");
+            entity.Property(e => e.Status).IsRequired().HasMaxLength(20).HasDefaultValue("Active");
             entity.HasIndex(e => e.Email).IsUnique();
 
             entity.HasOne(e => e.Department)
