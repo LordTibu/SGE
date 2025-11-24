@@ -1,10 +1,11 @@
 using Microsoft.EntityFrameworkCore;
-using SGE.Infrastructure.Data;
-using SGE.Application.Mappings;
-using SGE.Infrastructure.Repositories;
+using SGE.API.Middleware;
 using SGE.Application.Interfaces.Repositories;
 using SGE.Application.Interfaces.Services;
+using SGE.Application.Mappings;
 using SGE.Application.Services;
+using SGE.Infrastructure.Data;
+using SGE.Infrastructure.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -52,6 +53,7 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
+app.UseMiddleware<GlobalExceptionHandlingMiddleware>();
 app.UseHttpsRedirection();
 app.UseCors("AllowAll");
 app.UseAuthorization();
