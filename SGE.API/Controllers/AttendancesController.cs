@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SGE.Application.DTOs.Attendances;
 using SGE.Application.Interfaces.Services;
@@ -10,6 +11,7 @@ namespace SGE.API.Controllers
     /// </summary>
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize] // Tous les endpoints nécessitent une authentification
     public class AttendancesController : ControllerBase
     {
         private readonly IAttendanceService _attendanceService;
@@ -77,6 +79,7 @@ namespace SGE.API.Controllers
         /// Creates a new attendance record.
         /// </summary>
         [HttpPost]
+        [Authorize(Roles = "Admin,Manager")] // Seuls Admin et Manager peuvent créer manuellement
         [ProducesResponseType(201, Type = typeof(AttendanceDto))]
         [ProducesResponseType(400)]
         public async Task<ActionResult<AttendanceDto>> CreateAttendance(
@@ -150,6 +153,7 @@ namespace SGE.API.Controllers
         /// Retrieves a list of attendance records for a specific date.
         /// </summary>
         [HttpGet("date/{date:datetime}")]
+        [Authorize(Roles = "Admin,Manager")] // Vue globale réservée aux Admin/Manager
         [ProducesResponseType(200, Type = typeof(IEnumerable<AttendanceDto>))]
         public async Task<ActionResult<IEnumerable<AttendanceDto>>> GetAttendancesByDate(DateTime date, CancellationToken cancellationToken)
         {

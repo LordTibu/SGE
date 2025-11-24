@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SGE.Application.DTOs;
 using SGE.Application.DTOs.Employees;
@@ -10,6 +11,7 @@ namespace SGE.API.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/[controller]")]
+[Authorize] // Tous les endpoints nécessitent une authentification
 public class EmployeesController(IEmployeeService employeeService) :
     ControllerBase
 {
@@ -21,6 +23,7 @@ public class EmployeesController(IEmployeeService employeeService) :
     /// An asynchronous task that returns an action result containing an enumerable collection of EmployeeDto objects.
     /// </returns>
     [HttpGet]
+    [Authorize(Roles = "Admin,Manager")] // Seuls Admin et Manager peuvent voir tous les employés
     public async Task<ActionResult<IEnumerable<EmployeeDto>>>
         GetAll(CancellationToken cancellationToken)
     {
@@ -82,15 +85,16 @@ public class EmployeesController(IEmployeeService employeeService) :
         return Ok(employees);
     }
 
-    /// <suemmary>
-    /// Crates a new employee record.
-    /// < <param name="dto">The data transfer object containing the det/summary>
-    ///ails of the employee to create.</param>
+    /// <summary>
+    /// Creates a new employee record.
+    /// </summary>
+    /// <param name="dto">The data transfer object containing the details of the employee to create.</param>
     /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
     /// <returns>
     /// An asynchronous task that returns an action result containing the created EmployeeDto object.
     /// </returns>
     [HttpPost]
+    [Authorize(Roles = "Admin")] // Seuls les Admin peuvent créer des employés
     public async Task<ActionResult<EmployeeDto>>
         Create(EmployeeCreateDto dto, CancellationToken cancellationToken)
     {
@@ -110,6 +114,7 @@ public class EmployeesController(IEmployeeService employeeService) :
     /// An action result indicating the outcome of the update operation. Returns <c>NoContent</c> if the update is successful or <c>NotFound</c> if the employee is not found.
     /// </returns>
     [HttpPatch("{id:int}")]
+    [Authorize(Roles = "Admin,Manager")] // Admin et Manager peuvent modifier
     public async Task<IActionResult> Update(int id, EmployeeUpdateDto
         dto, CancellationToken cancellationToken)
     {
@@ -129,6 +134,7 @@ public class EmployeesController(IEmployeeService employeeService) :
     /// An asynchronous task that returns an action result. Returns NoContent when the deletion is successful, or NotFound if the employee does not exist.
     /// </returns>
     [HttpDelete("{id:int}")]
+    [Authorize(Roles = "Admin")] // Seuls les Admin peuvent supprimer
     public async Task<IActionResult> Delete(int id, CancellationToken
         cancellationToken)
     {
@@ -145,6 +151,7 @@ public class EmployeesController(IEmployeeService employeeService) :
     /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
     /// <returns>An Excel file containing all employee data.</returns>
     [HttpGet("export/excel")]
+    [Authorize(Roles = "Admin,Manager")] // Admin et Manager peuvent exporter
     public async Task<IActionResult> ExportToExcel(CancellationToken cancellationToken)
     {
         var fileBytes = await employeeService.ExportToExcelAsync(cancellationToken);
@@ -162,6 +169,7 @@ public class EmployeesController(IEmployeeService employeeService) :
     /// An asynchronous task that returns an action result containing the import result with created count and any errors.
     /// </returns>
     [HttpPost("import")]
+    [Authorize(Roles = "Admin")] // Seuls les Admin peuvent importer
     public async Task<IActionResult> Import([FromForm] IFormFile file, CancellationToken cancellationToken)
     {
         if (file == null || file.Length == 0) return BadRequest("No file provided");

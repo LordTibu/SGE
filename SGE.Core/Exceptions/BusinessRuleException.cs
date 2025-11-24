@@ -222,3 +222,96 @@ public class InvalidEmployeeDataException : SgeException
     {
     }
 }
+
+/// <summary>
+/// Represents an exception that is thrown when a user with the same identifier already exists in the system.
+/// </summary>
+/// <remarks>
+/// This exception is used to indicate that a registration attempt failed because a user with the specified
+/// email or username already exists. It includes the identifier type (email or username) and the conflicting value.
+/// The error code is "USER_ALREADY_EXISTS" and the HTTP status code is 409 (Conflict).
+/// </remarks>
+public class UserAlreadyExistsException : SgeException
+{
+    public UserAlreadyExistsException(string identifier, string type = "email")
+        : base($"Un utilisateur avec ce {type} '{identifier}' existe déjà.", "USER_ALREADY_EXISTS", 409)
+    {
+    }
+}
+
+/// <summary>
+/// Represents an exception that is thrown when user registration fails.
+/// </summary>
+/// <remarks>
+/// This exception is used when the Identity framework fails to create a user account.
+/// It aggregates multiple error messages from Identity and provides them as a single exception.
+/// The error code is "USER_REGISTRATION_FAILED" and the HTTP status code is 400 (Bad Request).
+/// </remarks>
+public class UserRegistrationException : SgeException
+{
+    public UserRegistrationException(IEnumerable<string> errors)
+        : base($"Erreur lors de la création de l'utilisateur: {string.Join("; ", errors)}", "USER_REGISTRATION_FAILED", 400)
+    {
+    }
+}
+
+/// <summary>
+/// Represents an exception that is thrown when login credentials are invalid.
+/// </summary>
+/// <remarks>
+/// This exception is used when a user provides an incorrect email or password during login.
+/// The error code is "INVALID_CREDENTIALS" and the HTTP status code is 401 (Unauthorized).
+/// </remarks>
+public class InvalidCredentialsException : SgeException
+{
+    public InvalidCredentialsException()
+        : base("Email ou mot de passe incorrect.", "INVALID_CREDENTIALS", 401)
+    {
+    }
+}
+
+/// <summary>
+/// Represents an exception that is thrown when a JWT token has expired.
+/// </summary>
+/// <remarks>
+/// This exception is used when attempting to use an expired access token.
+/// The error code is "TOKEN_EXPIRED" and the HTTP status code is 401 (Unauthorized).
+/// </remarks>
+public class TokenExpiredException : SgeException
+{
+    public TokenExpiredException()
+        : base("Le token a expiré.", "TOKEN_EXPIRED", 401)
+    {
+    }
+}
+
+/// <summary>
+/// Represents an exception that is thrown when a refresh token is invalid or has been revoked.
+/// </summary>
+/// <remarks>
+/// This exception is used when attempting to refresh an access token using an invalid,
+/// expired, or revoked refresh token. The error code is "INVALID_REFRESH_TOKEN" and
+/// the HTTP status code is 401 (Unauthorized).
+/// </remarks>
+public class InvalidRefreshTokenException : SgeException
+{
+    public InvalidRefreshTokenException()
+        : base("Token de rafraîchissement invalide.", "INVALID_REFRESH_TOKEN", 401)
+    {
+    }
+}
+
+/// <summary>
+/// Represents an exception that is thrown when a user account is not active.
+/// </summary>
+/// <remarks>
+/// This exception is used when a user with an inactive account attempts to log in or perform actions.
+/// The error code is "USER_NOT_ACTIVE" and the HTTP status code is 403 (Forbidden).
+/// </remarks>
+public class UserNotActiveException : SgeException
+{
+    public UserNotActiveException()
+        : base("Compte utilisateur désactivé.", "USER_NOT_ACTIVE", 403)
+    {
+    }
+}
