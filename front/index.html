@@ -27,6 +27,34 @@
     <section class="card">
       <div class="card__header">
         <div>
+          <p class="eyebrow">Authentification</p>
+          <h2>Se connecter</h2>
+          <p>Utilisez les identifiants de l'administrateur semé par défaut (<code>admin@example.com</code> / <code>Admin123!</code>) pour tester les routes protégées.</p>
+        </div>
+        <div class="actions">
+          <button id="logout" class="secondary" type="button">Se déconnecter</button>
+        </div>
+      </div>
+      <form id="auth-form" class="form-grid">
+        <label class="input-group">
+          <span>Email</span>
+          <input name="email" type="email" autocomplete="email" required />
+        </label>
+        <label class="input-group">
+          <span>Mot de passe</span>
+          <input name="password" type="password" autocomplete="current-password" required />
+        </label>
+        <div class="form-actions">
+          <button type="submit" class="primary">Connexion</button>
+          <p id="auth-status" role="status"></p>
+        </div>
+      </form>
+      <p id="current-user" class="hint"></p>
+    </section>
+
+    <section class="card">
+      <div class="card__header">
+        <div>
           <p class="eyebrow">Employees</p>
           <h2>Browse employees</h2>
           <p>Fetch existing employees from the API and review key details.</p>

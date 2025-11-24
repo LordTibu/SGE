@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SGE.Application.DTOs.LeaveRequests;
 using SGE.Application.Interfaces.Services;
@@ -11,6 +12,7 @@ namespace SGE.API.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/[controller]")]
+[Authorize] // Tous les endpoints nécessitent une authentification
 public class LeaveRequestsController(ILeaveRequestService leaveRequestService) : ControllerBase
 {
     /// <summary>
@@ -25,30 +27,11 @@ public class LeaveRequestsController(ILeaveRequestService leaveRequestService) :
     [ProducesResponseType(404)]
     [ProducesResponseType(409)]
     public async Task<ActionResult<LeaveRequestDto>> CreateLeaveRequest(
-        [FromBody] LeaveRequestCreateDto createDto, 
+        [FromBody] LeaveRequestCreateDto createDto,
         CancellationToken cancellationToken)
     {
-        try
-        {
-            var leaveRequest = await leaveRequestService.CreateAsync(createDto, cancellationToken);
-            return CreatedAtAction(nameof(GetLeaveRequest), new { id = leaveRequest.Id }, leaveRequest);
-        }
-        catch (KeyNotFoundException ex)
-        {
-            return NotFound(ex.Message);
-        }
-        catch (ArgumentException ex)
-        {
-            return BadRequest(ex.Message);
-        }
-        catch (InvalidOperationException ex)
-        {
-            return Conflict(ex.Message);
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500, $"Internal server error: {ex.Message}");
-        }
+        var leaveRequest = await leaveRequestService.CreateAsync(createDto, cancellationToken);
+        return CreatedAtAction(nameof(GetLeaveRequest), new { id = leaveRequest.Id }, leaveRequest);
     }
 
     /// <summary>
@@ -62,19 +45,12 @@ public class LeaveRequestsController(ILeaveRequestService leaveRequestService) :
     [ProducesResponseType(404)]
     public async Task<ActionResult<LeaveRequestDto>> GetLeaveRequest(int id, CancellationToken cancellationToken)
     {
-        try
-        {
-            var leaveRequest = await leaveRequestService.GetByIdAsync(id, cancellationToken);
-            
-            if (leaveRequest == null)
-                return NotFound($"Leave request with ID {id} not found");
+        var leaveRequest = await leaveRequestService.GetByIdAsync(id, cancellationToken);
 
-            return Ok(leaveRequest);
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500, $"Internal server error: {ex.Message}");
-        }
+        if (leaveRequest == null)
+            return NotFound($"Leave request with ID {id} not found");
+
+        return Ok(leaveRequest);
     }
 
     /// <summary>
@@ -86,18 +62,11 @@ public class LeaveRequestsController(ILeaveRequestService leaveRequestService) :
     [HttpGet("employee/{employeeId:int}")]
     [ProducesResponseType(200, Type = typeof(IEnumerable<LeaveRequestDto>))]
     public async Task<ActionResult<IEnumerable<LeaveRequestDto>>> GetLeaveRequestsByEmployee(
-        int employeeId, 
+        int employeeId,
         CancellationToken cancellationToken)
     {
-        try
-        {
-            var leaveRequests = await leaveRequestService.GetLeaveRequestsByEmployeeAsync(employeeId, cancellationToken);
-            return Ok(leaveRequests);
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500, $"Internal server error: {ex.Message}");
-        }
+        var leaveRequests = await leaveRequestService.GetLeaveRequestsByEmployeeAsync(employeeId, cancellationToken);
+        return Ok(leaveRequests);
     }
 
     /// <summary>
@@ -107,20 +76,14 @@ public class LeaveRequestsController(ILeaveRequestService leaveRequestService) :
     /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
     /// <returns>Returns a collection of leave requests with the specified status.</returns>
     [HttpGet("status/{status}")]
+    [Authorize(Roles = "Admin,Manager")] // Seuls Admin/Manager peuvent filtrer par statut
     [ProducesResponseType(200, Type = typeof(IEnumerable<LeaveRequestDto>))]
     public async Task<ActionResult<IEnumerable<LeaveRequestDto>>> GetLeaveRequestsByStatus(
-        LeaveStatus status, 
+        LeaveStatus status,
         CancellationToken cancellationToken)
     {
-        try
-        {
-            var leaveRequests = await leaveRequestService.GetLeaveRequestsByStatusAsync(status, cancellationToken);
-            return Ok(leaveRequests);
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500, $"Internal server error: {ex.Message}");
-        }
+        var leaveRequests = await leaveRequestService.GetLeaveRequestsByStatusAsync(status, cancellationToken);
+        return Ok(leaveRequests);
     }
 
     /// <summary>
@@ -129,18 +92,12 @@ public class LeaveRequestsController(ILeaveRequestService leaveRequestService) :
     /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
     /// <returns>Returns a collection of pending leave requests.</returns>
     [HttpGet("pending")]
+    [Authorize(Roles = "Admin,Manager")] // Seuls Admin/Manager peuvent voir les demandes en attente
     [ProducesResponseType(200, Type = typeof(IEnumerable<LeaveRequestDto>))]
     public async Task<ActionResult<IEnumerable<LeaveRequestDto>>> GetPendingLeaveRequests(CancellationToken cancellationToken)
     {
-        try
-        {
-            var leaveRequests = await leaveRequestService.GetPendingLeaveRequestsAsync();
-            return Ok(leaveRequests);
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500, $"Internal server error: {ex.Message}");
-        }
+        var leaveRequests = await leaveRequestService.GetPendingLeaveRequestsAsync();
+        return Ok(leaveRequests);
     }
 
     /// <summary>
@@ -151,31 +108,17 @@ public class LeaveRequestsController(ILeaveRequestService leaveRequestService) :
     /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
     /// <returns>Returns no content if the update was successful.</returns>
     [HttpPut("{id:int}/status")]
+    [Authorize(Roles = "Admin,Manager")] // Seuls Admin/Manager peuvent approuver/rejeter
     [ProducesResponseType(204)]
     [ProducesResponseType(400)]
     [ProducesResponseType(404)]
     public async Task<IActionResult> UpdateLeaveRequestStatus(
-        int id, 
-        [FromBody] LeaveRequestUpdateDto updateDto, 
+        int id,
+        [FromBody] LeaveRequestUpdateDto updateDto,
         CancellationToken cancellationToken)
     {
-        try
-        {
-            await leaveRequestService.UpdateStatusAsync(id, updateDto, cancellationToken);
-            return NoContent();
-        }
-        catch (KeyNotFoundException ex)
-        {
-            return NotFound(ex.Message);
-        }
-        catch (InvalidOperationException ex)
-        {
-            return BadRequest(ex.Message);
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500, $"Internal server error: {ex.Message}");
-        }
+        await leaveRequestService.UpdateStatusAsync(id, updateDto, cancellationToken);
+        return NoContent();
     }
 
     /// <summary>
@@ -189,23 +132,12 @@ public class LeaveRequestsController(ILeaveRequestService leaveRequestService) :
     [ProducesResponseType(200, Type = typeof(int))]
     [ProducesResponseType(404)]
     public async Task<ActionResult<int>> GetRemainingLeaveDays(
-        int employeeId, 
-        int year, 
+        int employeeId,
+        int year,
         CancellationToken cancellationToken)
     {
-        try
-        {
-            var remainingDays = await leaveRequestService.GetRemainingLeaveDaysAsync(employeeId, year, cancellationToken);
-            return Ok(remainingDays);
-        }
-        catch (KeyNotFoundException ex)
-        {
-            return NotFound(ex.Message);
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500, $"Internal server error: {ex.Message}");
-        }
+        var remainingDays = await leaveRequestService.GetRemainingLeaveDaysAsync(employeeId, year, cancellationToken);
+        return Ok(remainingDays);
     }
 
     /// <summary>
@@ -226,21 +158,13 @@ public class LeaveRequestsController(ILeaveRequestService leaveRequestService) :
         [FromQuery] int? excludeRequestId,
         CancellationToken cancellationToken)
     {
-        try
-        {
-            var hasConflict = await leaveRequestService.HasConflictingLeaveAsync(
-                employeeId, 
-                startDate, 
-                endDate, 
-                excludeRequestId, 
-                cancellationToken);
-            
-            return Ok(hasConflict);
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500, $"Internal server error: {ex.Message}");
-        }
+        var hasConflict = await leaveRequestService.HasConflictingLeaveAsync(
+            employeeId,
+            startDate,
+            endDate,
+            excludeRequestId,
+            cancellationToken);
+
+        return Ok(hasConflict);
     }
 }
-

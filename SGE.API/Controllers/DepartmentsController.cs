@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using SGE.Application.DTOs;
 using SGE.Application.Interfaces.Services;
 
@@ -10,6 +11,7 @@ namespace SGE.API.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/[controller]")]
+[Authorize] // Tous les endpoints nécessitent une authentification
 public class DepartmentsController : ControllerBase
 {
     private readonly IDepartmentService _departmentService;
@@ -25,6 +27,7 @@ public class DepartmentsController : ControllerBase
     /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <returns>An <see cref="ActionResult"/> containing an enumerable collection of <see cref="DepartmentDto"/>.</returns>
     [HttpGet]
+    [Authorize(Roles = "Admin,Manager")] // Seuls Admin et Manager peuvent voir tous les départements
     public async Task<ActionResult<IEnumerable<DepartmentDto>>> GetAll(CancellationToken cancellationToken)
     {
         var depts = await _departmentService.GetAllAsync(cancellationToken);
@@ -60,6 +63,7 @@ public class DepartmentsController : ControllerBase
     /// identifier and other details.
     /// </returns>
     [HttpPost]
+    [Authorize(Roles = "Admin")] // Seuls les Admin peuvent créer des départements
     public async Task<ActionResult<DepartmentDto>> Create(DepartmentCreateDto dto, CancellationToken cancellationToken)
     {
         var created = await _departmentService.CreateAsync(dto, cancellationToken);
@@ -77,6 +81,7 @@ public class DepartmentsController : ControllerBase
     /// Returns <see cref="NoContentResult"/> if successful, or <see cref="NotFoundResult"/> if the department is not found.
     /// </returns>
     [HttpPut("{id:int}")]
+    [Authorize(Roles = "Admin,Manager")] // Admin et Manager peuvent modifier
     public async Task<IActionResult> Update(int id, DepartmentUpdateDto dto, CancellationToken cancellationToken)
     {
         var ok = await _departmentService.UpdateAsync(id, dto, cancellationToken);
@@ -96,6 +101,7 @@ public class DepartmentsController : ControllerBase
     /// Returns NoContent if successful, otherwise NotFound if the department does not exist.
     /// </returns>
     [HttpDelete("{id:int}")]
+    [Authorize(Roles = "Admin")] // Seuls les Admin peuvent supprimer
     public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
     {
         var ok = await _departmentService.DeleteAsync(id, cancellationToken);
