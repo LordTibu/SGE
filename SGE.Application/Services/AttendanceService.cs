@@ -218,8 +218,11 @@ namespace SGE.Application.Services
             CancellationToken cancellationToken = default
         )
         {
-            var dayUtc = date.Date.ToUniversalTime();
-            var records = await attendanceRepository.FindAsync(a => a.Date == dayUtc, cancellationToken);
+            var dayStart = date.Date.ToUniversalTime();
+            var dayEnd = dayStart.AddDays(1);
+            var records = await attendanceRepository.FindAsync(
+                a => a.Date >= dayStart && a.Date < dayEnd, 
+                cancellationToken);
 
             var result = new List<AttendanceDto>();
             foreach (var att in records)
