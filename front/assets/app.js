@@ -3,12 +3,20 @@ const apiBaseInput = document.querySelector("#api-base");
 const saveBaseButton = document.querySelector("#save-base");
 const form = document.querySelector("#employee-form");
 const formStatus = document.querySelector("#form-status");
+const leaveForm = document.querySelector("#leave-form");
+const leaveFormStatus = document.querySelector("#leave-form-status");
+const remainingLeaveForm = document.querySelector("#remaining-leave-form");
+const remainingLeaveStatus = document.querySelector("#remaining-leave-status");
 
 const attendanceDateInput = document.querySelector("#attendance-date");
 
 const employeesTable = document.querySelector("#employees-table tbody");
 const departmentsTable = document.querySelector("#departments-table tbody");
 const attendancesTable = document.querySelector("#attendances-table tbody");
+const leaveRequestsTable = document.querySelector("#leave-requests-table tbody");
+
+const leaveStatusFilter = document.querySelector("#leave-status-filter");
+const leaveEmployeeFilter = document.querySelector("#leave-employee-filter");
 
 const state = {
   baseUrl: localStorage.getItem("sge:baseUrl") || defaultBaseUrl,
@@ -123,9 +131,59 @@ async function loadAttendances() {
   }
 }
 
+function formatDate(date) {
+  if (!date) return "";
+  return date.split("T")[0];
+}
+
+function setStatus(el, message, success = true) {
+  if (!el) return;
+  el.textContent = message;
+  el.style.color = success ? "#15803d" : "#b91c1c";
+}
+
+async function loadLeaveRequests({ status, employeeId } = {}) {
+  if (!leaveRequestsTable) return;
+  try {
+    setPlaceholder(leaveRequestsTable, "Loading...");
+
+    let path = `${state.baseUrl}/api/LeaveRequests/pending`;
+
+    if (employeeId) {
+      path = `${state.baseUrl}/api/LeaveRequests/employee/${employeeId}`;
+    } else if (status) {
+      path = `${state.baseUrl}/api/LeaveRequests/status/${status}`;
+    }
+
+    const leaveRequests = await fetchJson(path);
+
+    if (!leaveRequests.length) {
+      setPlaceholder(leaveRequestsTable, "No leave requests found.");
+      return;
+    }
+
+    leaveRequestsTable.innerHTML = leaveRequests
+      .map(
+        (req) => `
+          <tr>
+            <td>${req.id}</td>
+            <td>${req.employeeName || `Employee ${req.employeeId}`}</td>
+            <td>${req.leaveTypeName || req.leaveType}</td>
+            <td>${formatDate(req.startDate)} → ${formatDate(req.endDate)}</td>
+            <td>${req.daysRequested ?? "-"}</td>
+            <td>${req.statusName || req.status}</td>
+            <td>${req.managerComments ?? "-"}</td>
+          </tr>
+        `,
+      )
+      .join("");
+  } catch (error) {
+    setPlaceholder(leaveRequestsTable, `Failed to load leave requests: ${error.message}`);
+  }
+}
+
 function toast(message, success = true) {
-  formStatus.textContent = message;
-  formStatus.style.color = success ? "#15803d" : "#b91c1c";
+  setStatus(formStatus, message, success);
 }
 
 form.addEventListener("submit", async (event) => {
@@ -137,7 +195,7 @@ form.addEventListener("submit", async (event) => {
   payload.departmentId = Number(payload.departmentId);
 
   try {
-    formStatus.textContent = "Submitting...";
+    setStatus(formStatus, "Submitting...");
     const response = await fetch(`${state.baseUrl}/api/Employees`, {
       method: "POST",
       headers: {
@@ -159,11 +217,79 @@ form.addEventListener("submit", async (event) => {
   }
 });
 
-document.querySelector('[data-action="refresh-employees"]').addEventListener("click", loadEmployees);
-document.querySelector('[data-action="refresh-departments"]').addEventListener("click", loadDepartments);
-document.querySelector('[data-action="refresh-attendances"]').addEventListener("click", loadAttendances);
+leaveForm?.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const data = new FormData(leaveForm);
+  const payload = Object.fromEntries(data.entries());
+
+  payload.employeeId = Number(payload.employeeId);
+  payload.leaveType = Number(payload.leaveType);
+
+  try {
+    setStatus(leaveFormStatus, "Submitting...");
+    const response = await fetch(`${state.baseUrl}/api/LeaveRequests`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      const message = await response.text();
+      throw new Error(message || `Request failed with status ${response.status}`);
+    }
+
+    setStatus(leaveFormStatus, "Leave request submitted.");
+    leaveForm.reset();
+    loadLeaveRequests();
+  } catch (error) {
+    setStatus(leaveFormStatus, `Error: ${error.message}`, false);
+  }
+});
+
+remainingLeaveForm?.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const data = new FormData(remainingLeaveForm);
+  const payload = Object.fromEntries(data.entries());
+
+  payload.employeeId = Number(payload.employeeId);
+  payload.year = Number(payload.year);
+
+  try {
+    setStatus(remainingLeaveStatus, "Checking...");
+    const remainingDays = await fetchJson(
+      `${state.baseUrl}/api/LeaveRequests/employee/${payload.employeeId}/remaining/${payload.year}`,
+    );
+
+    setStatus(remainingLeaveStatus, `Remaining leave days: ${remainingDays}`);
+  } catch (error) {
+    setStatus(remainingLeaveStatus, `Error: ${error.message}`, false);
+  }
+});
+
+document
+  .querySelector('[data-action="refresh-employees"]')
+  .addEventListener("click", loadEmployees);
+document
+  .querySelector('[data-action="refresh-departments"]')
+  .addEventListener("click", loadDepartments);
+document
+  .querySelector('[data-action="refresh-attendances"]')
+  .addEventListener("click", loadAttendances);
+
+document
+  .querySelector('[data-action="refresh-leave-requests"]')
+  ?.addEventListener("click", () => loadLeaveRequests({ status: leaveStatusFilter?.value || undefined }));
+
+document.querySelector('[data-action="apply-leave-filters"]')?.addEventListener("click", () => {
+  const status = leaveStatusFilter?.value || undefined;
+  const employeeId = leaveEmployeeFilter?.value ? Number(leaveEmployeeFilter.value) : undefined;
+  loadLeaveRequests({ status, employeeId });
+});
 
 // Initial load
 loadEmployees();
 loadDepartments();
 loadAttendances();
+loadLeaveRequests();
