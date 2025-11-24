@@ -2,6 +2,7 @@
 using SGE.Application.DTOs;
 using SGE.Application.DTOs.Attendances;
 using SGE.Application.DTOs.Employees;
+using SGE.Application.DTOs.LeaveRequests;
 using SGE.Core.Entities;
 
 namespace SGE.Application.Mappings
@@ -40,6 +41,17 @@ namespace SGE.Application.Mappings
             CreateMap<Attendance, AttendanceDto>()
                 .ForMember(dest => dest.EmployeeName, opt => 
                     opt.MapFrom(src => $"{src.Employee.FirstName} {src.Employee.LastName}"));
+
+            // LeaveRequest mappings
+            CreateMap<LeaveRequestCreateDto, LeaveRequest>();
+            
+            CreateMap<LeaveRequest, LeaveRequestDto>()
+                .ForMember(dest => dest.EmployeeName, opt => 
+                    opt.MapFrom(src => $"{src.Employee.FirstName} {src.Employee.LastName}"))
+                .ForMember(dest => dest.LeaveTypeName, opt => 
+                    opt.MapFrom(src => src.LeaveType.ToString()))
+                .ForMember(dest => dest.StatusName, opt => 
+                    opt.MapFrom(src => src.Status.ToString()));
         }
     }
 }
