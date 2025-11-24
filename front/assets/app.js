@@ -1,22 +1,24 @@
-const defaultBaseUrl = "http://localhost:5000";
-const apiBaseInput = document.querySelector("#api-base");
-const saveBaseButton = document.querySelector("#save-base");
-const form = document.querySelector("#employee-form");
-const formStatus = document.querySelector("#form-status");
-const authForm = document.querySelector("#auth-form");
-const authStatus = document.querySelector("#auth-status");
-const currentUser = document.querySelector("#current-user");
+const defaultBaseUrl = "http://localhost:5222";
 const logoutButton = document.querySelector("#logout");
+const userNameEl = document.querySelector("#user-name");
+const userRoleEl = document.querySelector("#user-role");
 
 const attendanceDateInput = document.querySelector("#attendance-date");
+const attendanceForm = document.querySelector("#attendance-form");
+const attendanceStatus = document.querySelector("#attendance-status");
+const clockInBtn = document.querySelector("#clock-in-btn");
+const clockOutBtn = document.querySelector("#clock-out-btn");
+
+const leaveRequestForm = document.querySelector("#leave-request-form");
+const leaveRequestStatus = document.querySelector("#leave-request-status");
 
 const employeesTable = document.querySelector("#employees-table tbody");
 const departmentsTable = document.querySelector("#departments-table tbody");
 const attendancesTable = document.querySelector("#attendances-table tbody");
 const leaveRequestsTable = document.querySelector("#leave-requests-table tbody");
 
-const leaveStatusFilter = document.querySelector("#leave-status-filter");
-const leaveEmployeeFilter = document.querySelector("#leave-employee-filter");
+const form = document.querySelector("#employee-form");
+const formStatus = document.querySelector("#form-status");
 
 const state = {
   baseUrl: localStorage.getItem("sge:baseUrl") || defaultBaseUrl,
@@ -25,20 +27,19 @@ const state = {
   user: JSON.parse(localStorage.getItem("sge:user") || "null"),
 };
 
-apiBaseInput.value = state.baseUrl;
+// Check authentication on page load
+function checkAuthentication() {
+  if (!state.accessToken) {
+    window.location.href = "./login.html";
+    return false;
+  }
+  return true;
+}
 
-// set default attendance date to today (YYYY-MM-DD)
+// Set default attendance date to today
 if (attendanceDateInput) {
   attendanceDateInput.value = new Date().toISOString().split("T")[0];
 }
-
-saveBaseButton.addEventListener("click", () => {
-  const value = apiBaseInput.value.trim();
-  if (!value) return;
-  state.baseUrl = value;
-  localStorage.setItem("sge:baseUrl", value);
-  setStatus(formStatus, "API base URL mise à jour.");
-});
 
 function persistAuth() {
   if (state.accessToken) {
@@ -58,6 +59,23 @@ function clearAuth() {
   updateUserLabel();
 }
 
+function handleAuthError(error, targetTable, roleHint = "") {
+  const baseMessage = roleHint
+    ? `${roleHint}. Connectez-vous avec un compte autorisé.`
+    : "Authentification requise. Connectez-vous pour continuer.";
+
+  if (error.status === 401) {
+    clearAuth();
+    window.location.href = "./login.html";
+  }
+
+  if (targetTable) {
+    setPlaceholder(targetTable, baseMessage);
+  } else {
+    setStatus(formStatus, baseMessage, false);
+  }
+}
+
 function setStatus(element, message, success = true) {
   if (!element) return;
   element.textContent = message;
@@ -66,10 +84,12 @@ function setStatus(element, message, success = true) {
 
 function updateUserLabel() {
   if (state.user) {
-    const roles = state.user.roles?.length ? ` [${state.user.roles.join(", ")}]` : "";
-    currentUser.textContent = `Connecté en tant que ${state.user.firstName} ${state.user.lastName}${roles}`;
+    userNameEl.textContent = `${state.user.firstName} ${state.user.lastName}`;
+    const role = state.user.roles?.length ? state.user.roles[0] : "User";
+    userRoleEl.textContent = role;
   } else {
-    currentUser.textContent = "Aucun utilisateur connecté.";
+    userNameEl.textContent = "--";
+    userRoleEl.textContent = "--";
   }
 }
 
@@ -110,8 +130,14 @@ async function apiFetch(path, options = {}) {
   const payload = isJson ? await response.json() : await response.text();
 
   if (!response.ok) {
-    const message = typeof payload === "string" ? payload : payload?.message || payload?.error || JSON.stringify(payload);
-    throw new Error(message || `Request failed with status ${response.status}`);
+    const message =
+      typeof payload === "string" ? payload : payload?.message || payload?.error || JSON.stringify(payload);
+    const error = new Error(message || `Request failed with status ${response.status}`);
+    error.status = response.status;
+    if (response.status === 401 || response.status === 403) {
+      error.isAuthError = true;
+    }
+    throw error;
   }
 
   return payload;
@@ -143,6 +169,10 @@ async function loadEmployees() {
       )
       .join("");
   } catch (error) {
+    if (error.isAuthError) {
+      handleAuthError(error, employeesTable, "Accès refusé (Admin ou Manager requis)");
+      return;
+    }
     setPlaceholder(employeesTable, `Erreur lors du chargement: ${error.message}`);
   }
 }
@@ -170,6 +200,10 @@ async function loadDepartments() {
       )
       .join("");
   } catch (error) {
+    if (error.isAuthError) {
+      handleAuthError(error, departmentsTable, "Accès refusé (Admin ou Manager requis)");
+      return;
+    }
     setPlaceholder(departmentsTable, `Erreur lors du chargement: ${error.message}`);
   }
 }
@@ -181,7 +215,9 @@ async function loadAttendances() {
 
     const date = attendanceDateInput?.value || new Date().toISOString().split("T")[0];
     const attendances = await apiFetch(`/api/Attendances/date/${date}`);
-    if (!attendances.length) {
+    console.log("Attendances response:", attendances);
+    
+    if (!attendances || !Array.isArray(attendances) || attendances.length === 0) {
       setPlaceholder(attendancesTable, "Aucune présence trouvée.");
       return;
     }
@@ -200,6 +236,10 @@ async function loadAttendances() {
       )
       .join("");
   } catch (error) {
+    if (error.isAuthError) {
+      handleAuthError(error, attendancesTable, "Accès refusé (Admin ou Manager requis)");
+      return;
+    }
     setPlaceholder(attendancesTable, `Erreur lors du chargement: ${error.message}`);
   }
 }
@@ -212,6 +252,11 @@ form.addEventListener("submit", async (event) => {
   payload.salary = Number(payload.salary);
   payload.departmentId = Number(payload.departmentId);
 
+  if (!state.accessToken) {
+    setStatus(formStatus, "Connectez-vous avec un compte Admin pour créer un employé.", false);
+    return;
+  }
+
   try {
     setStatus(formStatus, "Envoi en cours...");
     await apiFetch(`/api/Employees`, {
@@ -223,54 +268,161 @@ form.addEventListener("submit", async (event) => {
     form.reset();
     loadEmployees();
   } catch (error) {
+    if (error.isAuthError) {
+      handleAuthError(error, null, "Accès refusé (rôle Admin requis)");
+      return;
+    }
     setStatus(formStatus, `Erreur: ${error.message}`, false);
-  }
-});
-
-authForm.addEventListener("submit", async (event) => {
-  event.preventDefault();
-  const data = new FormData(authForm);
-  const credentials = {
-    email: data.get("email")?.toString() ?? "",
-    password: data.get("password")?.toString() ?? "",
-  };
-
-  try {
-    setStatus(authStatus, "Connexion en cours...");
-    const authResponse = await apiFetch(`/api/Auth/login`, {
-      method: "POST",
-      body: credentials,
-    });
-
-    state.accessToken = authResponse.accessToken;
-    state.refreshToken = authResponse.refreshToken;
-    state.user = authResponse.user;
-    persistAuth();
-    updateUserLabel();
-    setStatus(authStatus, "Connecté avec succès.");
-    loadEmployees();
-    loadDepartments();
-    loadAttendances();
-  } catch (error) {
-    setStatus(authStatus, `Erreur: ${error.message}`, false);
   }
 });
 
 logoutButton.addEventListener("click", () => {
   clearAuth();
-  setStatus(authStatus, "Déconnecté.");
-  setPlaceholder(employeesTable, "Connectez-vous pour consulter ces données.");
-  setPlaceholder(departmentsTable, "Connectez-vous pour consulter ces données.");
-  setPlaceholder(attendancesTable, "Connectez-vous pour consulter ces données.");
+  window.location.href = "./login.html";
 });
 
-attendanceDateInput?.addEventListener("change", loadAttendances);
-document.querySelector('[data-action="refresh-employees"]').addEventListener("click", loadEmployees);
-document.querySelector('[data-action="refresh-departments"]').addEventListener("click", loadDepartments);
-document.querySelector('[data-action="refresh-attendances"]').addEventListener("click", loadAttendances);
+// Attendance tracking
+clockInBtn?.addEventListener("click", async () => {
+  const employeeId = attendanceForm?.querySelector('input[name="employeeId"]')?.value;
+  const notes = attendanceForm?.querySelector('input[name="notes"]')?.value;
 
-// Initial load
+  if (!state.accessToken) {
+    setStatus(attendanceStatus, "Connectez-vous pour pointer.", false);
+    return;
+  }
+
+  try {
+    setStatus(attendanceStatus, "Envoi en cours...");
+    await apiFetch(`/api/Attendances/clock-in`, {
+      method: "POST",
+      body: {
+        employeeId: Number(employeeId),
+        dateTime: new Date().toISOString(),
+        notes: notes || "",
+      },
+    });
+
+    setStatus(attendanceStatus, "Pointage d'arrivée enregistré.", true);
+    attendanceForm?.reset();
+    loadAttendances();
+  } catch (error) {
+    setStatus(attendanceStatus, `Erreur: ${error.message}`, false);
+  }
+});
+
+clockOutBtn?.addEventListener("click", async () => {
+  const employeeId = attendanceForm?.querySelector('input[name="employeeId"]')?.value;
+  const notes = attendanceForm?.querySelector('input[name="notes"]')?.value;
+
+  if (!state.accessToken) {
+    setStatus(attendanceStatus, "Connectez-vous pour pointer.", false);
+    return;
+  }
+
+  try {
+    setStatus(attendanceStatus, "Envoi en cours...");
+    await apiFetch(`/api/Attendances/clock-out`, {
+      method: "POST",
+      body: {
+        employeeId: Number(employeeId),
+        dateTime: new Date().toISOString(),
+        notes: notes || "",
+      },
+    });
+
+    setStatus(attendanceStatus, "Pointage de départ enregistré.", true);
+    attendanceForm?.reset();
+    loadAttendances();
+  } catch (error) {
+    setStatus(attendanceStatus, `Erreur: ${error.message}`, false);
+  }
+});
+
+// Leave requests
+leaveRequestForm?.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const data = new FormData(leaveRequestForm);
+  const payload = {
+    employeeId: Number(data.get("employeeId")),
+    leaveType: Number(data.get("leaveType")),
+    startDate: new Date(data.get("startDate")).toISOString(),
+    endDate: new Date(data.get("endDate")).toISOString(),
+    reason: data.get("reason"),
+  };
+
+  if (!state.accessToken) {
+    setStatus(leaveRequestStatus, "Connectez-vous pour créer une demande.", false);
+    return;
+  }
+
+  try {
+    setStatus(leaveRequestStatus, "Envoi en cours...");
+    await apiFetch(`/api/LeaveRequests`, {
+      method: "POST",
+      body: payload,
+    });
+
+    setStatus(leaveRequestStatus, "Demande de congé créée avec succès.", true);
+    leaveRequestForm.reset();
+    loadLeaveRequests();
+  } catch (error) {
+    setStatus(leaveRequestStatus, `Erreur: ${error.message}`, false);
+  }
+});
+
+async function loadLeaveRequests() {
+  try {
+    setPlaceholder(leaveRequestsTable, "Chargement...");
+    if (!ensureAuthenticated(leaveRequestsTable)) return;
+
+    const leaveRequests = await apiFetch(`/api/LeaveRequests/pending`);
+    if (!leaveRequests || !Array.isArray(leaveRequests) || leaveRequests.length === 0) {
+      setPlaceholder(leaveRequestsTable, "Aucune demande de congé trouvée.");
+      return;
+    }
+
+    const leaveTypeMap = { 1: "Annual", 2: "Sick", 3: "Maternity", 4: "Paternity", 5: "Personal", 6: "Unpaid" };
+    const statusMap = { 1: "Pending", 2: "Approved", 3: "Rejected", 4: "Cancelled" };
+
+    leaveRequestsTable.innerHTML = leaveRequests
+      .map(
+        (req) => `
+          <tr>
+            <td>${req.id}</td>
+            <td>${req.employeeId}</td>
+            <td>${leaveTypeMap[req.leaveType] || "Unknown"}</td>
+            <td>${req.startDate?.split("T")[0] ?? ""}</td>
+            <td>${req.endDate?.split("T")[0] ?? ""}</td>
+            <td>${statusMap[req.status] || "Unknown"}</td>
+            <td>${req.reason ?? ""}</td>
+          </tr>
+        `,
+      )
+      .join("");
+  } catch (error) {
+    if (error.isAuthError) {
+      handleAuthError(error, leaveRequestsTable, "Accès refusé (Admin ou Manager requis)");
+      return;
+    }
+    setPlaceholder(leaveRequestsTable, `Erreur lors du chargement: ${error.message}`);
+  }
+}
+
+attendanceDateInput?.addEventListener("change", loadAttendances);
+document.querySelector('[data-action="refresh-employees"]')?.addEventListener("click", loadEmployees);
+document.querySelector('[data-action="refresh-departments"]')?.addEventListener("click", loadDepartments);
+document.querySelector('[data-action="refresh-attendances"]')?.addEventListener("click", loadAttendances);
+document.querySelector('[data-action="refresh-leave-requests"]')?.addEventListener("click", loadLeaveRequests);
+
+// Check authentication on page load
+if (!checkAuthentication()) {
+  throw new Error("Redirecting to login...");
+}
+
+// Initialize user display
 updateUserLabel();
+
+// Load all data
 loadEmployees();
 loadDepartments();
 loadAttendances();

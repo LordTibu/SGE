@@ -1,57 +1,31 @@
 <!doctype html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SGE Front</title>
+  <title>SGE Dashboard</title>
   <link rel="stylesheet" href="./assets/style.css" />
 </head>
+
 <body>
   <header class="hero">
-    <div>
-      <p class="eyebrow">Simple Frontend</p>
-      <h1>SGE Dashboard</h1>
-      <p>Explore employees, departments, and attendances from the SGE API with a lightweight web UI.</p>
-      <div class="controls">
-        <label class="input-group">
-          <span>API base URL</span>
-          <input id="api-base" type="url" autocomplete="url" />
-        </label>
-        <button id="save-base" class="primary">Save</button>
+    <div class="hero-content">
+      <div>
+        <h1>SGE Dashboard</h1>
+        <p>Système de Gestion des Employés</p>
       </div>
-      <p class="hint">The default base URL is <code>http://localhost:5000</code> (matching the Docker compose mapping).</p>
+      <div class="hero-actions">
+        <div id="user-info" class="user-info">
+          <span id="user-name">--</span>
+          <span id="user-role" class="user-role">--</span>
+        </div>
+        <button id="logout" class="secondary" type="button">Déconnexion</button>
+      </div>
     </div>
   </header>
 
   <main class="container">
-    <section class="card">
-      <div class="card__header">
-        <div>
-          <p class="eyebrow">Authentification</p>
-          <h2>Se connecter</h2>
-          <p>Utilisez les identifiants de l'administrateur semé par défaut (<code>admin@example.com</code> / <code>Admin123!</code>) pour tester les routes protégées.</p>
-        </div>
-        <div class="actions">
-          <button id="logout" class="secondary" type="button">Se déconnecter</button>
-        </div>
-      </div>
-      <form id="auth-form" class="form-grid">
-        <label class="input-group">
-          <span>Email</span>
-          <input name="email" type="email" autocomplete="email" required />
-        </label>
-        <label class="input-group">
-          <span>Mot de passe</span>
-          <input name="password" type="password" autocomplete="current-password" required />
-        </label>
-        <div class="form-actions">
-          <button type="submit" class="primary">Connexion</button>
-          <p id="auth-status" role="status"></p>
-        </div>
-      </form>
-      <p id="current-user" class="hint"></p>
-    </section>
-
     <section class="card">
       <div class="card__header">
         <div>
@@ -76,7 +50,9 @@
             </tr>
           </thead>
           <tbody>
-            <tr class="placeholder"><td colspan="6">No data loaded yet.</td></tr>
+            <tr class="placeholder">
+              <td colspan="6">No data loaded yet.</td>
+            </tr>
           </tbody>
         </table>
       </div>
@@ -103,7 +79,9 @@
             </tr>
           </thead>
           <tbody>
-            <tr class="placeholder"><td colspan="3">No data loaded yet.</td></tr>
+            <tr class="placeholder">
+              <td colspan="3">No data loaded yet.</td>
+            </tr>
           </tbody>
         </table>
       </div>
@@ -133,121 +111,12 @@
             </tr>
           </thead>
           <tbody>
-            <tr class="placeholder"><td colspan="5">No data loaded yet.</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </section>
-
-    <section class="card">
-      <div class="card__header">
-        <div>
-          <p class="eyebrow">Leave requests</p>
-          <h2>Manage employee leave</h2>
-          <p>Review pending requests, filter by status or employee, and track approvals.</p>
-        </div>
-        <div class="actions leave-actions">
-          <label class="input-group">
-            <span>Status</span>
-            <select id="leave-status-filter">
-              <option value="">Pending only</option>
-              <option value="Pending">Pending</option>
-              <option value="Approved">Approved</option>
-              <option value="Rejected">Rejected</option>
-              <option value="Cancelled">Cancelled</option>
-            </select>
-          </label>
-          <label class="input-group">
-            <span>Employee ID</span>
-            <input id="leave-employee-filter" type="number" min="1" placeholder="e.g. 3" />
-          </label>
-          <button data-action="apply-leave-filters" class="secondary">Apply filters</button>
-          <button data-action="refresh-leave-requests" class="primary">Load requests</button>
-        </div>
-      </div>
-      <div class="table-wrapper">
-        <table id="leave-requests-table">
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Employee</th>
-              <th>Type</th>
-              <th>Dates</th>
-              <th>Days</th>
-              <th>Status</th>
-              <th>Manager comments</th>
+            <tr class="placeholder">
+              <td colspan="5">No data loaded yet.</td>
             </tr>
-          </thead>
-          <tbody>
-            <tr class="placeholder"><td colspan="7">No data loaded yet.</td></tr>
           </tbody>
         </table>
       </div>
-    </section>
-
-    <section class="card">
-      <div class="card__header">
-        <div>
-          <p class="eyebrow">Leave requests</p>
-          <h2>Submit a new request</h2>
-          <p>Create leave requests directly from the dashboard and quickly check remaining days.</p>
-        </div>
-      </div>
-      <form id="leave-form" class="form-grid">
-        <label class="input-group">
-          <span>Employee ID</span>
-          <input name="employeeId" type="number" min="1" required />
-        </label>
-        <label class="input-group">
-          <span>Leave type</span>
-          <select name="leaveType" required>
-            <option value="1">Annual</option>
-            <option value="2">Sick</option>
-            <option value="3">Maternity</option>
-            <option value="4">Paternity</option>
-            <option value="5">Personal</option>
-            <option value="6">Unpaid</option>
-          </select>
-        </label>
-        <label class="input-group">
-          <span>Start date</span>
-          <input name="startDate" type="date" required />
-        </label>
-        <label class="input-group">
-          <span>End date</span>
-          <input name="endDate" type="date" required />
-        </label>
-        <label class="input-group">
-          <span>Reason</span>
-          <textarea name="reason" rows="3" required placeholder="Provide a short reason"></textarea>
-        </label>
-        <div class="form-actions">
-          <button type="submit" class="primary">Create request</button>
-          <p id="leave-form-status" role="status"></p>
-        </div>
-      </form>
-
-      <div class="card__header" style="margin-top: 16px;">
-        <div>
-          <p class="eyebrow">Balance</p>
-          <h3>Check remaining days</h3>
-          <p>Look up the remaining leave for an employee in a selected year.</p>
-        </div>
-      </div>
-      <form id="remaining-leave-form" class="form-grid">
-        <label class="input-group">
-          <span>Employee ID</span>
-          <input name="employeeId" type="number" min="1" required />
-        </label>
-        <label class="input-group">
-          <span>Year</span>
-          <input name="year" type="number" min="2000" max="9999" required />
-        </label>
-        <div class="form-actions">
-          <button type="submit" class="secondary">Check remaining days</button>
-          <p id="remaining-leave-status" role="status"></p>
-        </div>
-      </form>
     </section>
 
     <section class="card">
@@ -301,8 +170,101 @@
         </div>
       </form>
     </section>
+
+    <section class="card">
+      <div class="card__header">
+        <div>
+          <p class="eyebrow">Clock In/Out</p>
+          <h2>Attendance tracking</h2>
+          <p>Record your clock-in and clock-out times.</p>
+        </div>
+      </div>
+      <form id="attendance-form" class="form-grid">
+        <label class="input-group">
+          <span>Employee ID</span>
+          <input name="employeeId" type="number" min="1" required />
+        </label>
+        <label class="input-group">
+          <span>Notes</span>
+          <input name="notes" placeholder="Optional notes" />
+        </label>
+        <div class="form-actions">
+          <button type="button" id="clock-in-btn" class="primary">Clock In</button>
+          <button type="button" id="clock-out-btn" class="secondary">Clock Out</button>
+          <p id="attendance-status" role="status"></p>
+        </div>
+      </form>
+    </section>
+
+    <section class="card">
+      <div class="card__header">
+        <div>
+          <p class="eyebrow">Leave Requests</p>
+          <h2>Request time off</h2>
+          <p>Create and manage your leave requests.</p>
+        </div>
+        <div class="actions">
+          <button data-action="refresh-leave-requests" class="primary">Refresh list</button>
+        </div>
+      </div>
+      <div class="table-wrapper">
+        <table id="leave-requests-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Employee</th>
+              <th>Type</th>
+              <th>Start Date</th>
+              <th>End Date</th>
+              <th>Status</th>
+              <th>Reason</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="placeholder">
+              <td colspan="7">No data loaded yet.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <form id="leave-request-form" class="form-grid">
+        <label class="input-group">
+          <span>Employee ID</span>
+          <input name="employeeId" type="number" min="1" required />
+        </label>
+        <label class="input-group">
+          <span>Leave Type</span>
+          <select name="leaveType" required>
+            <option value="">-- Select --</option>
+            <option value="1">Annual</option>
+            <option value="2">Sick</option>
+            <option value="3">Maternity</option>
+            <option value="4">Paternity</option>
+            <option value="5">Personal</option>
+            <option value="6">Unpaid</option>
+          </select>
+        </label>
+        <label class="input-group">
+          <span>Start Date</span>
+          <input name="startDate" type="datetime-local" required />
+        </label>
+        <label class="input-group">
+          <span>End Date</span>
+          <input name="endDate" type="datetime-local" required />
+        </label>
+        <label class="input-group">
+          <span>Reason</span>
+          <textarea name="reason" rows="3" required></textarea>
+        </label>
+        <div class="form-actions">
+          <button type="submit" class="primary">Request Leave</button>
+          <p id="leave-request-status" role="status"></p>
+        </div>
+      </form>
+    </section>
   </main>
 
   <script src="./assets/app.js"></script>
 </body>
+
 </html>
