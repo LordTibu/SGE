@@ -13,6 +13,10 @@ const attendanceDateInput = document.querySelector("#attendance-date");
 const employeesTable = document.querySelector("#employees-table tbody");
 const departmentsTable = document.querySelector("#departments-table tbody");
 const attendancesTable = document.querySelector("#attendances-table tbody");
+const leaveRequestsTable = document.querySelector("#leave-requests-table tbody");
+
+const leaveStatusFilter = document.querySelector("#leave-status-filter");
+const leaveEmployeeFilter = document.querySelector("#leave-employee-filter");
 
 const state = {
   baseUrl: localStorage.getItem("sge:baseUrl") || defaultBaseUrl,
@@ -270,3 +274,4 @@ updateUserLabel();
 loadEmployees();
 loadDepartments();
 loadAttendances();
+loadLeaveRequests();

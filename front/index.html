@@ -142,6 +142,117 @@
     <section class="card">
       <div class="card__header">
         <div>
+          <p class="eyebrow">Leave requests</p>
+          <h2>Manage employee leave</h2>
+          <p>Review pending requests, filter by status or employee, and track approvals.</p>
+        </div>
+        <div class="actions leave-actions">
+          <label class="input-group">
+            <span>Status</span>
+            <select id="leave-status-filter">
+              <option value="">Pending only</option>
+              <option value="Pending">Pending</option>
+              <option value="Approved">Approved</option>
+              <option value="Rejected">Rejected</option>
+              <option value="Cancelled">Cancelled</option>
+            </select>
+          </label>
+          <label class="input-group">
+            <span>Employee ID</span>
+            <input id="leave-employee-filter" type="number" min="1" placeholder="e.g. 3" />
+          </label>
+          <button data-action="apply-leave-filters" class="secondary">Apply filters</button>
+          <button data-action="refresh-leave-requests" class="primary">Load requests</button>
+        </div>
+      </div>
+      <div class="table-wrapper">
+        <table id="leave-requests-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Employee</th>
+              <th>Type</th>
+              <th>Dates</th>
+              <th>Days</th>
+              <th>Status</th>
+              <th>Manager comments</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="placeholder"><td colspan="7">No data loaded yet.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card__header">
+        <div>
+          <p class="eyebrow">Leave requests</p>
+          <h2>Submit a new request</h2>
+          <p>Create leave requests directly from the dashboard and quickly check remaining days.</p>
+        </div>
+      </div>
+      <form id="leave-form" class="form-grid">
+        <label class="input-group">
+          <span>Employee ID</span>
+          <input name="employeeId" type="number" min="1" required />
+        </label>
+        <label class="input-group">
+          <span>Leave type</span>
+          <select name="leaveType" required>
+            <option value="1">Annual</option>
+            <option value="2">Sick</option>
+            <option value="3">Maternity</option>
+            <option value="4">Paternity</option>
+            <option value="5">Personal</option>
+            <option value="6">Unpaid</option>
+          </select>
+        </label>
+        <label class="input-group">
+          <span>Start date</span>
+          <input name="startDate" type="date" required />
+        </label>
+        <label class="input-group">
+          <span>End date</span>
+          <input name="endDate" type="date" required />
+        </label>
+        <label class="input-group">
+          <span>Reason</span>
+          <textarea name="reason" rows="3" required placeholder="Provide a short reason"></textarea>
+        </label>
+        <div class="form-actions">
+          <button type="submit" class="primary">Create request</button>
+          <p id="leave-form-status" role="status"></p>
+        </div>
+      </form>
+
+      <div class="card__header" style="margin-top: 16px;">
+        <div>
+          <p class="eyebrow">Balance</p>
+          <h3>Check remaining days</h3>
+          <p>Look up the remaining leave for an employee in a selected year.</p>
+        </div>
+      </div>
+      <form id="remaining-leave-form" class="form-grid">
+        <label class="input-group">
+          <span>Employee ID</span>
+          <input name="employeeId" type="number" min="1" required />
+        </label>
+        <label class="input-group">
+          <span>Year</span>
+          <input name="year" type="number" min="2000" max="9999" required />
+        </label>
+        <div class="form-actions">
+          <button type="submit" class="secondary">Check remaining days</button>
+          <p id="remaining-leave-status" role="status"></p>
+        </div>
+      </form>
+    </section>
+
+    <section class="card">
+      <div class="card__header">
+        <div>
           <p class="eyebrow">Create</p>
           <h2>Add an employee</h2>
           <p>Use this quick form to create an employee with the required fields.</p>
