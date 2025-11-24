@@ -22,6 +22,13 @@ http://localhost:5000/api
 
 L'API utilise **JWT (JSON Web Token)** pour l'authentification. Tous les endpoints (sauf `/api/Auth/register`, `/api/Auth/login`, `/api/Auth/refresh`) nécessitent un token JWT valide dans le header `Authorization`.
 
+### Protection par rôles (vue synthétique)
+
+- **Sans authentification** : `/api/Auth/register`, `/api/Auth/login`, `/api/Auth/refresh`
+- **Authentifié (tous rôles)** : opérations personnelles (voir ses propres données, pointer, créer une demande de congé, voir ses congés, récupérer son profil, se déconnecter)
+- **Manager ou Admin** : gestion globale (lister employés/départements/présences, filtrer les congés, approuver/rejeter, exporter), mises à jour courantes (modifier employé ou département)
+- **Admin uniquement** : création/suppression de départements ou d’employés, import Excel d’employés
+
 ### Format du header d'authentification
 ```
 Authorization: Bearer {votre-access-token}
@@ -741,6 +748,66 @@ GET /api/LeaveRequests/employee/1/conflicts?startDate=2025-12-15T00:00:00Z&endDa
 | Voir demandes en attente | ❌ | ✅ | ✅ |
 | Approuver/Rejeter | ❌ | ✅ | ✅ |
 | Voir jours restants | ✅ | ✅ | ✅ |
+
+---
+
+### Détail par route et rôle requis
+
+#### AuthController
+| Route | Méthode | Rôle requis |
+|-------|---------|-------------|
+| `/api/Auth/register` | POST | Public |
+| `/api/Auth/login` | POST | Public |
+| `/api/Auth/refresh` | POST | Public |
+| `/api/Auth/me/{userId}` | GET | Authentifié (User/Manager/Admin) |
+| `/api/Auth/logout/{userId}` | POST | Authentifié (User/Manager/Admin) |
+| `/api/Auth/revoke` | POST | Authentifié (User/Manager/Admin) |
+
+#### DepartmentsController (`/api/Departments`)
+| Route | Méthode | Rôle requis |
+|-------|---------|-------------|
+| `/` | GET | Manager ou Admin |
+| `/{id}` | GET | Authentifié (User/Manager/Admin) |
+| `/` | POST | Admin |
+| `/{id}` | PATCH | Manager ou Admin |
+| `/{id}` | DELETE | Admin |
+
+#### EmployeesController (`/api/Employees`)
+| Route | Méthode | Rôle requis |
+|-------|---------|-------------|
+| `/` | GET | Manager ou Admin |
+| `/{id}` | GET | Authentifié (User/Manager/Admin) |
+| `/by-email/{email}` | GET | Authentifié (User/Manager/Admin) |
+| `/by-department/{departmentId}` | GET | Authentifié (User/Manager/Admin) |
+| `/` | POST | Admin |
+| `/{id}` | PATCH | Manager ou Admin |
+| `/{id}` | DELETE | Admin |
+| `/export/excel` | GET | Manager ou Admin |
+| `/import` | POST | Admin |
+
+#### AttendancesController (`/api/Attendances`)
+| Route | Méthode | Rôle requis |
+|-------|---------|-------------|
+| `/clock-in` | POST | Authentifié (User/Manager/Admin) |
+| `/clock-out` | POST | Authentifié (User/Manager/Admin) |
+| `/` | POST | Manager ou Admin |
+| `/{id}` | GET | Authentifié (User/Manager/Admin) |
+| `/employee/{employeeId}` | GET | Authentifié (User/Manager/Admin) |
+| `/date/{date}` | GET | Manager ou Admin |
+| `/employee/{employeeId}/today` | GET | Authentifié (User/Manager/Admin) |
+| `/employee/{employeeId}/hours/{year}/{month}` | GET | Authentifié (User/Manager/Admin) |
+
+#### LeaveRequestsController (`/api/LeaveRequests`)
+| Route | Méthode | Rôle requis |
+|-------|---------|-------------|
+| `/` | POST | Authentifié (User/Manager/Admin) |
+| `/{id}` | GET | Authentifié (User/Manager/Admin) |
+| `/employee/{employeeId}` | GET | Authentifié (User/Manager/Admin) |
+| `/status/{status}` | GET | Manager ou Admin |
+| `/pending` | GET | Manager ou Admin |
+| `/{id}/status` | PUT | Manager ou Admin |
+| `/employee/{employeeId}/remaining/{year}` | GET | Authentifié (User/Manager/Admin) |
+| `/employee/{employeeId}/conflicts` | GET | Authentifié (User/Manager/Admin) |
 
 ---
 

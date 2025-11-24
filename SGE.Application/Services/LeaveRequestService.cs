@@ -126,19 +126,19 @@ public class LeaveRequestService(
     /// <param name="dto">The updated status and manager comments.</param>
     /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
     /// <returns>True if the update was successful, false otherwise.</returns>
-    /// <exception cref="KeyNotFoundException">Thrown when the leave request is not found.</exception>
-    /// <exception cref="InvalidOperationException">Thrown when trying to update a non-pending request.</exception>
+    /// <exception cref="LeaveRequestNotFoundException">Thrown when the leave request is not found.</exception>
+    /// <exception cref="InvalidLeaveStatusTransitionException">Thrown when trying to update a non-pending request.</exception>
     public async Task<bool> UpdateStatusAsync(int id, LeaveRequestUpdateDto dto,
         CancellationToken cancellationToken = default)
     {
         var leaveRequest = await leaveRequestRepository.GetByIdAsync(id, cancellationToken);
 
         if (leaveRequest == null)
-            throw new KeyNotFoundException($"Leave request with ID {id} not found");
+            throw new LeaveRequestNotFoundException(id);
 
         // Seules les demandes en attente peuvent être modifiées
         if (leaveRequest.Status != LeaveStatus.Pending)
-            throw new InvalidOperationException("Only pending leave requests can be updated");
+            throw new InvalidLeaveStatusTransitionException(leaveRequest.Status.ToString(), dto.Status.ToString());
 
         // Mettre à jour le statut et les commentaires
         leaveRequest.Status = dto.Status;
@@ -159,13 +159,13 @@ public class LeaveRequestService(
     /// <param name="year">The year for which to calculate remaining leave days.</param>
     /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
     /// <returns>The number of remaining leave days.</returns>
-    /// <exception cref="KeyNotFoundException">Thrown when the employee is not found.</exception>
+    /// <exception cref="EmployeeNotFoundException">Thrown when the employee is not found.</exception>
     public async Task<int> GetRemainingLeaveDaysAsync(int employeeId, int year,
         CancellationToken cancellationToken = default)
     {
         // Vérifier que l'employé existe
         if (!await employeeRepository.ExistsAsync(employeeId, cancellationToken))
-            throw new KeyNotFoundException($"Employee with ID {employeeId} not found");
+            throw new EmployeeNotFoundException(employeeId);
 
         // Récupérer toutes les demandes de congés approuvées pour l'année
         var startOfYear = new DateTime(year, 1, 1, 0, 0, 0, DateTimeKind.Utc);

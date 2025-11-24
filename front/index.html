@@ -19,11 +19,39 @@
         </label>
         <button id="save-base" class="primary">Save</button>
       </div>
-      <p class="hint">The default base URL is <code>http://localhost:5000</code> (matching the Docker compose mapping).</p>
+      <p class="hint">Default API base is <code>http://localhost:5222</code> (Visual Studio profile). If you run Docker Compose, switch to <code>http://localhost:5000</code>.</p>
     </div>
   </header>
 
   <main class="container">
+    <section class="card">
+      <div class="card__header">
+        <div>
+          <p class="eyebrow">Authentification</p>
+          <h2>Se connecter</h2>
+          <p>Utilisez les identifiants de l'administrateur semé par défaut (<code>admin@example.com</code> / <code>Admin123!</code>) pour tester les routes protégées.</p>
+        </div>
+        <div class="actions">
+          <button id="logout" class="secondary" type="button">Se déconnecter</button>
+        </div>
+      </div>
+      <form id="auth-form" class="form-grid">
+        <label class="input-group">
+          <span>Email</span>
+          <input name="email" type="email" autocomplete="email" required />
+        </label>
+        <label class="input-group">
+          <span>Mot de passe</span>
+          <input name="password" type="password" autocomplete="current-password" required />
+        </label>
+        <div class="form-actions">
+          <button type="submit" class="primary">Connexion</button>
+          <p id="auth-status" role="status"></p>
+        </div>
+      </form>
+      <p id="current-user" class="hint"></p>
+    </section>
+
     <section class="card">
       <div class="card__header">
         <div>
