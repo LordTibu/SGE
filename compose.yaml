@@ -1,4 +1,4 @@
-﻿services:
+services:
   sge.postgres:
     image: postgres:latest # Utilise la dernière version de l'image officielle PostgreSQL
     container_name: sge_postgres
@@ -26,6 +26,19 @@
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ConnectionStrings__DefaultConnection: "Host=sge.postgres;Database=sgedb;Username=sgeuser;Password=sgepassword"
+    networks:
+      - sge_network
+
+  sge.front:
+    image: sge.front
+    build:
+      context: .
+      dockerfile: front/Dockerfile
+    container_name: sge_front
+    ports:
+      - "4173:80" # Expose la version statique du frontend
+    depends_on:
+      - sge.api
     networks:
       - sge_network
 
