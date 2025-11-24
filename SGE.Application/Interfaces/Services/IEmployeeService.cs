@@ -95,4 +95,11 @@ public interface IEmployeeService
     /// A task that represents the asynchronous operation. The task result contains the import result with created count and any errors.
     /// </returns>
     Task<ImportResultDto> ImportFromExcelAsync(Stream fileStream, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Exports all employees to an Excel file.
+    /// </summary>
+    /// <param name="cancellationToken">Token to monitor for cancellation requests.</param>
+    /// <returns>A byte array containing the Excel file data.</returns>
+    Task<byte[]> ExportToExcelAsync(CancellationToken cancellationToken = default);
 }

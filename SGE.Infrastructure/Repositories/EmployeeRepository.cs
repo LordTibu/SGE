@@ -23,6 +23,15 @@ public class EmployeeRepository : Repository<Employee>,
     }
 
     /// <inheritdoc/>
+    public override async Task<IEnumerable<Employee>> GetAllAsync(CancellationToken cancellationToken = default)
+    {
+        return await _dbSet
+            .AsNoTracking()
+            .Include(e => e.Department)
+            .ToListAsync(cancellationToken);
+    }
+
+    /// <inheritdoc/>
     public async Task<Employee?> GetByEmailAsync(string email,
         CancellationToken cancellationToken = default)
     {
@@ -42,6 +51,15 @@ public class EmployeeRepository : Repository<Employee>,
             .Where(e => e.DepartmentId == departmentId)
             .Include(e => e.Department)
             .ToListAsync(cancellationToken);
+    }
+
+    /// <inheritdoc/>
+    public override async Task<Employee?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
+    {
+        return await _dbSet
+            .AsNoTracking()
+            .Include(e => e.Department)
+            .FirstOrDefaultAsync(e => e.Id == id, cancellationToken);
     }
 
     /// <inheritdoc/>

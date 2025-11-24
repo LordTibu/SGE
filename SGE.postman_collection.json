@@ -1,0 +1,206 @@
+{
+  "info": {
+    "name": "SGE API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_postman_id": "d8f9a4f8-9b1c-4a3e-9fe2-000000000001"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:5222" }
+  ],
+  "item": [
+    {
+      "name": "Employees",
+      "item": [
+        {
+          "name": "GET All Employees",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/Employees"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {"type": "text/javascript", "exec": [
+                "pm.test('Status is 200', function () { pm.response.to.have.status(200); });"
+              ]}
+            }
+          ]
+        },
+        {
+          "name": "GET Employee by Id",
+          "request": {"method": "GET","url": "{{baseUrl}}/api/Employees/1"},
+          "event": [{"listen": "test","script": {"type": "text/javascript","exec": [
+            "pm.expect([200,404]).to.include(pm.response.code);"
+          ]}}]
+        },
+        {
+          "name": "GET Employee by Email",
+          "request": {"method": "GET","url": "{{baseUrl}}/api/Employees/by-email/test@example.com"},
+          "event": [{"listen": "test","script": {"type": "text/javascript","exec": [
+            "pm.expect([200,404]).to.include(pm.response.code);"
+          ]}}]
+        },
+        {
+          "name": "GET Employees by Department",
+          "request": {"method": "GET","url": "{{baseUrl}}/api/Employees/by-department/1"},
+          "event": [{"listen": "test","script": {"type": "text/javascript","exec": [
+            "pm.test('Status is 200', function () { pm.response.to.have.status(200); });"
+          ]}}]
+        },
+        {
+          "name": "POST Create Employee",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type","value": "application/json"}],
+            "url": "{{baseUrl}}/api/Employees",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\",\n  \"email\": \"john.doe@example.com\",\n  \"phoneNumber\": \"+33123456789\",\n  \"address\": \"1 Rue Exemple, Paris\",\n  \"position\": \"Engineer\",\n  \"salary\": 55000,\n  \"hireDate\": \"2025-01-10T00:00:00\",\n  \"departmentId\": 1\n}"
+            }
+          },
+          "event": [{"listen": "test","script": {"type": "text/javascript","exec": [
+            "pm.test('Status is 201', function () { pm.response.to.have.status(201); });"
+          ]}}]
+        },
+        {
+          "name": "PATCH Update Employee",
+          "request": {
+            "method": "PATCH",
+            "header": [{"key": "Content-Type","value": "application/json"}],
+            "url": "{{baseUrl}}/api/Employees/1",
+            "body": {"mode": "raw","raw": "{\n  \"phoneNumber\": \"+33987654321\",\n  \"address\": \"2 Rue Mise a Jour, Lyon\",\n  \"position\": \"Senior Engineer\",\n  \"salary\": 60000,\n  \"departmentId\": 1\n}"}
+          },
+          "event": [{"listen": "test","script": {"type": "text/javascript","exec": [
+            "pm.expect([204,404]).to.include(pm.response.code);"
+          ]}}]
+        },
+        {
+          "name": "DELETE Employee",
+          "request": {"method": "DELETE","url": "{{baseUrl}}/api/Employees/1"},
+          "event": [{"listen": "test","script": {"type": "text/javascript","exec": [
+            "pm.expect([204,404]).to.include(pm.response.code);"
+          ]}}]
+        },
+        {
+          "name": "GET Export Employees to Excel",
+          "request": {"method": "GET","url": "{{baseUrl}}/api/Employees/export/excel"},
+          "event": [{"listen": "test","script": {"type": "text/javascript","exec": [
+            "pm.test('Status is 200', function () { pm.response.to.have.status(200); });"
+          ]}}]
+        },
+        {
+          "name": "POST Import Employees (form-data)",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/Employees/import",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {"key": "file", "type": "file", "src": []}
+              ]
+            }
+          },
+          "event": [{"listen": "test","script": {"type": "text/javascript","exec": [
+            "pm.test('Status is 200', function () { pm.response.to.have.status(200); });"
+          ]}}]
+        }
+      ]
+    },
+    {
+      "name": "Departments",
+      "item": [
+        {"name": "GET All Departments","request": {"method": "GET","url": "{{baseUrl}}/api/Departments"},"event": [{"listen": "test","script": {"type": "text/javascript","exec": ["pm.test('Status is 200', function () { pm.response.to.have.status(200); });"]}}]},
+        {"name": "GET Department by Id","request": {"method": "GET","url": "{{baseUrl}}/api/Departments/1"},"event": [{"listen": "test","script": {"type": "text/javascript","exec": ["pm.expect([200,404]).to.include(pm.response.code);"]}}]},
+        {"name": "POST Create Department","request": {"method": "POST","header": [{"key": "Content-Type","value": "application/json"}],"url": "{{baseUrl}}/api/Departments","body": {"mode": "raw","raw": "{\n  \"name\": \"R&D\",\n  \"code\": \"RD\",\n  \"description\": \"Research and Development\"\n}"}},"event": [{"listen": "test","script": {"type": "text/javascript","exec": ["pm.test('Status is 201', function () { pm.response.to.have.status(201); });"]}}]},
+        {"name": "PUT Update Department","request": {"method": "PUT","header": [{"key": "Content-Type","value": "application/json"}],"url": "{{baseUrl}}/api/Departments/1","body": {"mode": "raw","raw": "{\n  \"name\": \"Engineering\",\n  \"description\": \"All engineering teams\"\n}"}},"event": [{"listen": "test","script": {"type": "text/javascript","exec": ["pm.expect([204,404]).to.include(pm.response.code);"]}}]},
+        {"name": "DELETE Department","request": {"method": "DELETE","url": "{{baseUrl}}/api/Departments/1"},"event": [{"listen": "test","script": {"type": "text/javascript","exec": ["pm.expect([204,404]).to.include(pm.response.code);"]}}]}
+      ]
+    },
+    {
+      "name": "Attendances",
+      "item": [
+        {
+          "name": "POST Clock In",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type","value": "application/json"}],
+            "url": "{{baseUrl}}/api/Attendances/clock-in",
+            "body": {"mode": "raw","raw": "{\n  \"employeeId\": 1,\n  \"dateTime\": \"{{$isoTimestamp}}\",\n  \"notes\": \"Arrived on time\"\n}"}
+          },
+          "event": [{"listen": "test","script": {"type": "text/javascript","exec": [
+            "pm.expect([200,404,400]).to.include(pm.response.code);"
+          ]}}]
+        },
+        {
+          "name": "POST Clock Out",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type","value": "application/json"}],
+            "url": "{{baseUrl}}/api/Attendances/clock-out",
+            "body": {"mode": "raw","raw": "{\n  \"employeeId\": 1,\n  \"dateTime\": \"{{$isoTimestamp}}\",\n  \"notes\": \"Leaving\"\n}"}
+          },
+          "event": [{"listen": "test","script": {"type": "text/javascript","exec": [
+            "pm.expect([200,404,400]).to.include(pm.response.code);"
+          ]}}]
+        },
+        {
+          "name": "POST Create Attendance",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type","value": "application/json"}],
+            "url": "{{baseUrl}}/api/Attendances",
+            "body": {"mode": "raw","raw": "{\n  \"employeeId\": 1,\n  \"date\": \"2025-11-05\",\n  \"clockIn\": \"08:30:00\",\n  \"clockOut\": \"17:30:00\",\n  \"breakDurationHours\": 1,\n  \"notes\": \"Regular day\"\n}"}
+          },
+          "event": [{"listen": "test","script": {"type": "text/javascript","exec": [
+            "pm.expect([201,404,409]).to.include(pm.response.code);"
+          ]}}]
+        },
+        {
+          "name": "GET Attendance by Id",
+          "request": {"method": "GET","url": "{{baseUrl}}/api/Attendances/1"},
+          "event": [{"listen": "test","script": {"type": "text/javascript","exec": [
+            "pm.expect([200,404]).to.include(pm.response.code);"
+          ]}}]
+        },
+        {
+          "name": "GET Employee Attendances (with range)",
+          "request": {"method": "GET","url": {
+            "raw": "{{baseUrl}}/api/Attendances/employee/1?startDate=2025-11-01&endDate=2025-11-30",
+            "host": ["{{baseUrl}}"],
+            "path": ["api","Attendances","employee","1"],
+            "query": [
+              {"key": "startDate", "value": "2025-11-01"},
+              {"key": "endDate", "value": "2025-11-30"}
+            ]
+          }},
+          "event": [{"listen": "test","script": {"type": "text/javascript","exec": [
+            "pm.test('Status is 200', function () { pm.response.to.have.status(200); });"
+          ]}}]
+        },
+        {
+          "name": "GET Attendances by Date",
+          "request": {"method": "GET","url": "{{baseUrl}}/api/Attendances/date/2025-11-05"},
+          "event": [{"listen": "test","script": {"type": "text/javascript","exec": [
+            "pm.test('Status is 200', function () { pm.response.to.have.status(200); });"
+          ]}}]
+        },
+        {
+          "name": "GET Today Attendance",
+          "request": {"method": "GET","url": "{{baseUrl}}/api/Attendances/employee/1/today"},
+          "event": [{"listen": "test","script": {"type": "text/javascript","exec": [
+            "pm.expect([200,404]).to.include(pm.response.code);"
+          ]}}]
+        },
+        {
+          "name": "GET Monthly Worked Hours",
+          "request": {"method": "GET","url": "{{baseUrl}}/api/Attendances/employee/1/hours/2025/11"},
+          "event": [{"listen": "test","script": {"type": "text/javascript","exec": [
+            "pm.test('Status is 200', function () { pm.response.to.have.status(200); });"
+          ]}}]
+        }
+      ]
+    }
+  ]
+}
+
+
