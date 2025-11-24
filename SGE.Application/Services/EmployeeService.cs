@@ -315,6 +315,7 @@ public class EmployeeService(
                         Salary = salary,
                         HireDate = hireDate,
                         DepartmentId = departmentId,
+                        Status = "Active",
                         CreatedBy = "System Import",
                         UpdatedBy = "System Import"
                     };
