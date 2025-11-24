@@ -6,6 +6,7 @@ using SGE.Application.DTOs.Employees;
 using SGE.Application.Interfaces.Repositories;
 using SGE.Application.Interfaces.Services;
 using SGE.Core.Entities;
+using SGE.Core.Exceptions;
 
 namespace SGE.Application.Services;
 
@@ -78,17 +79,18 @@ public class EmployeeService(
     /// <param name="dto">The data transfer object containing details of the employee to be created.</param>
     /// <param name="cancellationToken">Token to monitor for cancellation requests.</param>
     /// <returns>A task that represents the asynchronous operation. The task result contains the created EmployeeDto object.</returns>
-    /// <exception cref="ApplicationException">Thrown if the specified department does not exist or if the email is already associated with another employee.</exception>
+    /// <exception cref="DepartmentNotFoundException">Thrown if the specified department does not exist.</exception>
+    /// <exception cref="DuplicateEmployeeEmailException">Thrown if the email is already associated with another employee.</exception>
     public async Task<EmployeeDto> CreateAsync(EmployeeCreateDto dto, CancellationToken cancellationToken = default)
     {
         var department = await
             departmentRepository.GetByIdAsync(dto.DepartmentId, cancellationToken);
         if (department == null)
-            throw new ApplicationException("Il n'existe aucun departement avec cet identifiant");
+            throw new DepartmentNotFoundException(dto.DepartmentId);
         var existingEmployee = await
             employeeRepository.GetByEmailAsync(dto.Email, cancellationToken);
         if (existingEmployee != null)
-            throw new ApplicationException("Cet email existe déjà pour un autre employée");
+            throw new DuplicateEmployeeEmailException(dto.Email);
         var entity = mapper.Map<Employee>(dto);
         await employeeRepository.AddAsync(entity, cancellationToken);
         return mapper.Map<EmployeeDto>(entity);

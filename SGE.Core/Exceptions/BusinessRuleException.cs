@@ -158,6 +158,28 @@ public class AttendanceException : SgeException
 }
 
 /// <summary>
+/// Represents an exception thrown when an employee already recorded a clock-out for the day.
+/// </summary>
+public class AttendanceAlreadyClockedOutException : SgeException
+{
+    public AttendanceAlreadyClockedOutException(int employeeId)
+        : base($"L'employé {employeeId} a déjà enregistré une sortie aujourd'hui.", "ALREADY_CLOCKED_OUT", 409)
+    {
+    }
+}
+
+/// <summary>
+/// Represents an exception thrown when attempting to create a duplicate attendance entry for the same day.
+/// </summary>
+public class AttendanceRecordExistsException : SgeException
+{
+    public AttendanceRecordExistsException(int employeeId, DateTime date)
+        : base($"Une présence existe déjà pour l'employé {employeeId} le {date:dd/MM/yyyy}.", "ATTENDANCE_DUPLICATE", 409)
+    {
+    }
+}
+
+/// <summary>
 /// Represents an exception that is thrown when an attempt is made to clock in an employee who is already clocked in.
 /// </summary>
 /// <remarks>
@@ -209,6 +231,17 @@ public class DuplicateDepartmentNameException : SgeException
 }
 
 /// <summary>
+/// Represents an exception thrown when a department code already exists.
+/// </summary>
+public class DuplicateDepartmentCodeException : SgeException
+{
+    public DuplicateDepartmentCodeException(string departmentCode)
+        : base($"Le code du département '{departmentCode}' existe déjà.", "DEPARTMENT_CODE_EXISTS", 409)
+    {
+    }
+}
+
+/// <summary>
 /// Represents an exception that is thrown when invalid data is provided for an employee within the system.
 /// </summary>
 /// <remarks>
@@ -219,6 +252,17 @@ public class InvalidEmployeeDataException : SgeException
 {
     public InvalidEmployeeDataException(string message)
         : base(message, "INVALID_EMPLOYEE_DATA", 400)
+    {
+    }
+}
+
+/// <summary>
+/// Represents an exception thrown when attempting to create an employee with an email already in use.
+/// </summary>
+public class DuplicateEmployeeEmailException : SgeException
+{
+    public DuplicateEmployeeEmailException(string email)
+        : base($"L'email '{email}' est déjà associé à un employé.", "EMPLOYEE_EMAIL_EXISTS", 409)
     {
     }
 }
