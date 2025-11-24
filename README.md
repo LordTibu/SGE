@@ -479,7 +479,6 @@ POST /api/LeaveRequests
 
 ### Avec Docker
 ```bash
-cd /home/dorianjoly/Bureau/COURS_YNOV/WebServices/SGE
 docker compose up -d
 ```
 
