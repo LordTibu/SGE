@@ -516,6 +516,10 @@ form.addEventListener("submit", async (event) => {
 
   payload.salary = Number(payload.salary);
   payload.departmentId = Number(payload.departmentId);
+  
+  // Convert hireDate to ISO 8601 format (YYYY-MM-DDTHH:mm:ssZ)
+  const [year, month, day] = payload.hireDate.split('-');
+  payload.hireDate = `${year}-${month}-${day}T00:00:00Z`;
 
   if (!state.accessToken) {
     setStatus(formStatus, "Connectez-vous avec un compte Admin pour créer un employé.", false);
