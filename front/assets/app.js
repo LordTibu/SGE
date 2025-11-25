@@ -3,14 +3,17 @@ const logoutButton = document.querySelector("#logout");
 const userNameEl = document.querySelector("#user-name");
 const userRoleEl = document.querySelector("#user-role");
 
-const attendanceDateInput = document.querySelector("#attendance-date");
+const attendanceStartDateInput = document.querySelector("#attendance-start-date");
+const attendanceEndDateInput = document.querySelector("#attendance-end-date");
 const attendanceForm = document.querySelector("#attendance-form");
 const attendanceStatus = document.querySelector("#attendance-status");
+const attendanceTitle = document.querySelector("#attendance-title");
 const clockInBtn = document.querySelector("#clock-in-btn");
 const clockOutBtn = document.querySelector("#clock-out-btn");
 
 const leaveRequestForm = document.querySelector("#leave-request-form");
 const leaveRequestStatus = document.querySelector("#leave-request-status");
+const leaveTitle = document.querySelector("#leave-title");
 
 const employeesTable = document.querySelector("#employees-table tbody");
 const departmentsTable = document.querySelector("#departments-table tbody");
@@ -36,9 +39,45 @@ function checkAuthentication() {
   return true;
 }
 
-// Set default attendance date to today
-if (attendanceDateInput) {
-  attendanceDateInput.value = new Date().toISOString().split("T")[0];
+// Check if user has a specific role
+function hasRole(role) {
+  if (!state.user || !state.user.roles) return false;
+  return state.user.roles.includes(role);
+}
+
+// Check if user has any of the required roles
+function hasAnyRole(roles) {
+  if (!Array.isArray(roles)) roles = [roles];
+  return roles.some(role => hasRole(role));
+}
+
+// Set up role-based visibility
+function setupRoleBasedVisibility() {
+  const sections = document.querySelectorAll("[data-role-required]");
+  sections.forEach(section => {
+    const requiredRoles = section.getAttribute("data-role-required").split(",");
+    if (!hasAnyRole(requiredRoles)) {
+      section.style.display = "none";
+    }
+  });
+
+  // Update UI based on role
+  if (hasRole("Admin") || hasRole("Manager")) {
+    attendanceTitle.textContent = "All attendances";
+  } else {
+    attendanceTitle.textContent = "My attendances";
+    leaveTitle.textContent = "My leave requests";
+  }
+}
+
+// Set default attendance dates to current month
+function setDefaultDateRange() {
+  const today = new Date();
+  const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+  const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+  
+  attendanceStartDateInput.value = firstDay.toISOString().split("T")[0];
+  attendanceEndDateInput.value = lastDay.toISOString().split("T")[0];
 }
 
 function persistAuth() {
@@ -213,9 +252,27 @@ async function loadAttendances() {
     setPlaceholder(attendancesTable, "Chargement...");
     if (!ensureAuthenticated(attendancesTable)) return;
 
-    const date = attendanceDateInput?.value || new Date().toISOString().split("T")[0];
-    const attendances = await apiFetch(`/api/Attendances/date/${date}`);
-    console.log("Attendances response:", attendances);
+    let attendances;
+    const startDate = attendanceStartDateInput?.value || new Date().toISOString().split("T")[0];
+    const endDate = attendanceEndDateInput?.value || new Date().toISOString().split("T")[0];
+
+    if (hasRole("Admin") || hasRole("Manager")) {
+      // Admin/Manager: Get all attendances for specific date
+      const date = startDate;
+      attendances = await apiFetch(`/api/Attendances/date/${date}`);
+    } else {
+      // Regular user: Get their own attendances for date range
+      const employeeId = state.user?.employeeId || state.user?.id;
+      if (!employeeId) {
+        setPlaceholder(attendancesTable, "Impossible de récupérer vos présences.");
+        return;
+      }
+      const params = new URLSearchParams({
+        startDate: `${startDate}T00:00:00Z`,
+        endDate: `${endDate}T23:59:59Z`
+      });
+      attendances = await apiFetch(`/api/Attendances/employee/${employeeId}?${params}`);
+    }
     
     if (!attendances || !Array.isArray(attendances) || attendances.length === 0) {
       setPlaceholder(attendancesTable, "Aucune présence trouvée.");
@@ -237,7 +294,7 @@ async function loadAttendances() {
       .join("");
   } catch (error) {
     if (error.isAuthError) {
-      handleAuthError(error, attendancesTable, "Accès refusé (Admin ou Manager requis)");
+      handleAuthError(error, attendancesTable, "Accès refusé");
       return;
     }
     setPlaceholder(attendancesTable, `Erreur lors du chargement: ${error.message}`);
@@ -375,7 +432,21 @@ async function loadLeaveRequests() {
     setPlaceholder(leaveRequestsTable, "Chargement...");
     if (!ensureAuthenticated(leaveRequestsTable)) return;
 
-    const leaveRequests = await apiFetch(`/api/LeaveRequests/pending`);
+    let leaveRequests;
+    
+    if (hasRole("Admin") || hasRole("Manager")) {
+      // Admin/Manager: Get all pending requests
+      leaveRequests = await apiFetch(`/api/LeaveRequests/pending`);
+    } else {
+      // Regular user: Get their own leave requests
+      const employeeId = state.user?.employeeId || state.user?.id;
+      if (!employeeId) {
+        setPlaceholder(leaveRequestsTable, "Impossible de récupérer vos demandes de congé.");
+        return;
+      }
+      leaveRequests = await apiFetch(`/api/LeaveRequests/employee/${employeeId}`);
+    }
+    
     if (!leaveRequests || !Array.isArray(leaveRequests) || leaveRequests.length === 0) {
       setPlaceholder(leaveRequestsTable, "Aucune demande de congé trouvée.");
       return;
@@ -401,14 +472,18 @@ async function loadLeaveRequests() {
       .join("");
   } catch (error) {
     if (error.isAuthError) {
-      handleAuthError(error, leaveRequestsTable, "Accès refusé (Admin ou Manager requis)");
+      handleAuthError(error, leaveRequestsTable, "Accès refusé");
       return;
     }
     setPlaceholder(leaveRequestsTable, `Erreur lors du chargement: ${error.message}`);
   }
 }
 
-attendanceDateInput?.addEventListener("change", loadAttendances);
+// Event listeners for date filtering
+attendanceStartDateInput?.addEventListener("change", loadAttendances);
+attendanceEndDateInput?.addEventListener("change", loadAttendances);
+
+// Refresh buttons
 document.querySelector('[data-action="refresh-employees"]')?.addEventListener("click", loadEmployees);
 document.querySelector('[data-action="refresh-departments"]')?.addEventListener("click", loadDepartments);
 document.querySelector('[data-action="refresh-attendances"]')?.addEventListener("click", loadAttendances);
@@ -421,6 +496,12 @@ if (!checkAuthentication()) {
 
 // Initialize user display
 updateUserLabel();
+
+// Set up role-based visibility
+setupRoleBasedVisibility();
+
+// Set default date range for attendance
+setDefaultDateRange();
 
 // Load all data
 loadEmployees();

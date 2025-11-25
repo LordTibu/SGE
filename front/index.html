@@ -26,12 +26,11 @@
   </header>
 
   <main class="container">
-    <section class="card">
+    <section class="card" data-role-required="admin,manager">
       <div class="card__header">
         <div>
           <p class="eyebrow">Employees</p>
           <h2>Browse employees</h2>
-          <p>Fetch existing employees from the API and review key details.</p>
         </div>
         <div class="actions">
           <button data-action="refresh-employees" class="primary">Refresh list</button>
@@ -58,12 +57,11 @@
       </div>
     </section>
 
-    <section class="card">
+    <section class="card" data-role-required="admin,manager">
       <div class="card__header">
         <div>
           <p class="eyebrow">Departments</p>
           <h2>Browse departments</h2>
-          <p>Quickly inspect configured departments and their descriptions.</p>
         </div>
         <div class="actions">
           <button data-action="refresh-departments" class="primary">Refresh list</button>
@@ -87,15 +85,15 @@
       </div>
     </section>
 
-    <section class="card">
+    <section class="card" id="attendance-section">
       <div class="card__header">
         <div>
           <p class="eyebrow">Attendances</p>
-          <h2>Recent attendances</h2>
-          <p>Check in on attendance records and export data to Excel.</p>
+          <h2 id="attendance-title">Recent attendances</h2>
         </div>
         <div class="actions">
-          <input id="attendance-date" type="date" />
+          <input id="attendance-start-date" type="date" />
+          <input id="attendance-end-date" type="date" />
           <button data-action="refresh-attendances" class="primary">Refresh list</button>
         </div>
       </div>
@@ -119,7 +117,7 @@
       </div>
     </section>
 
-    <section class="card">
+    <section class="card" data-role-required="admin">
       <div class="card__header">
         <div>
           <p class="eyebrow">Create</p>
@@ -196,12 +194,11 @@
       </form>
     </section>
 
-    <section class="card">
+    <section class="card" id="leave-requests-section">
       <div class="card__header">
         <div>
           <p class="eyebrow">Leave Requests</p>
-          <h2>Request time off</h2>
-          <p>Create and manage your leave requests.</p>
+          <h2 id="leave-title">Request time off</h2>
         </div>
         <div class="actions">
           <button data-action="refresh-leave-requests" class="primary">Refresh list</button>
