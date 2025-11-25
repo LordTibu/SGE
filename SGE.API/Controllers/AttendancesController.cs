@@ -148,5 +148,22 @@ namespace SGE.API.Controllers
                 await _attendanceService.GetMonthlyWorkedHoursAsync(employeeId, year, month, cancellationToken);
             return Ok(totalHours);
         }
+        
+        /// <summary>
+        /// Updates an existing attendance record.
+        /// </summary>
+        [HttpPut("{id:int}")]
+        [Authorize(Roles = "Admin,Manager")] // Seuls Admin et Manager peuvent modifier
+        [ProducesResponseType(200, Type = typeof(AttendanceDto))]
+        [ProducesResponseType(404)]
+        [ProducesResponseType(400)]
+        public async Task<ActionResult<AttendanceDto>> UpdateAttendance(
+            int id,
+            [FromBody] AttendanceUpdateDto updateAttendanceDto,
+            CancellationToken cancellationToken)
+        {
+            var attendance = await _attendanceService.UpdateAttendanceAsync(id, updateAttendanceDto, cancellationToken);
+            return Ok(attendance);
+        }
     }
 }
