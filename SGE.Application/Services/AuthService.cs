@@ -202,5 +202,123 @@ public class AuthService(
 
         return userDto;
     }
+
+    /// <summary>
+    /// Updates the roles assigned to a user.
+    /// </summary>
+    /// <param name="userId">The unique identifier of the user whose roles are to be updated.</param>
+    /// <param name="roles">The list of role names to assign to the user.</param>
+    /// <returns><c>true</c> if the update was successful, otherwise <c>false</c>.</returns>
+    /// <exception cref="KeyNotFoundException">Thrown when the user is not found.</exception>
+    public async Task<bool> UpdateUserRolesAsync(string userId, IList<string> roles)
+    {
+        var user = await userManager.FindByIdAsync(userId);
+        if (user == null)
+            throw new KeyNotFoundException($"User with ID {userId} not found");
+
+        // Récupérer les rôles actuels
+        var currentRoles = await userManager.GetRolesAsync(user);
+
+        // Supprimer tous les rôles actuels
+        if (currentRoles.Any())
+        {
+            await userManager.RemoveFromRolesAsync(user, currentRoles);
+        }
+
+        // Ajouter les nouveaux rôles
+        if (roles.Any())
+        {
+            var result = await userManager.AddToRolesAsync(user, roles);
+            if (!result.Succeeded)
+                return false;
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// Updates the information of an existing user.
+    /// </summary>
+    /// <param name="userId">The unique identifier of the user to update.</param>
+    /// <param name="updateDto">The data transfer object containing the updated user information.</param>
+    /// <returns>A <see cref="UserDto"/> containing the updated user information.</returns>
+    /// <exception cref="KeyNotFoundException">Thrown when the user is not found.</exception>
+    /// <exception cref="UserAlreadyExistsException">Thrown when the email or username already exists for another user.</exception>
+    public async Task<UserDto> UpdateUserAsync(string userId, UpdateUserDto updateDto)
+    {
+        var user = await userManager.FindByIdAsync(userId);
+        if (user == null)
+            throw new KeyNotFoundException($"User with ID {userId} not found");
+
+        // Vérifier si l'email est modifié et s'il existe déjà
+        if (!string.IsNullOrEmpty(updateDto.Email) && updateDto.Email != user.Email)
+        {
+            var existingUserByEmail = await userManager.FindByEmailAsync(updateDto.Email);
+            if (existingUserByEmail != null && existingUserByEmail.Id != userId)
+                throw new UserAlreadyExistsException(updateDto.Email, "email");
+            
+            user.Email = updateDto.Email;
+            user.NormalizedEmail = updateDto.Email.ToUpperInvariant();
+        }
+
+        // Vérifier si le username est modifié et s'il existe déjà
+        if (!string.IsNullOrEmpty(updateDto.UserName) && updateDto.UserName != user.UserName)
+        {
+            var existingUserByUsername = await userManager.FindByNameAsync(updateDto.UserName);
+            if (existingUserByUsername != null && existingUserByUsername.Id != userId)
+                throw new UserAlreadyExistsException(updateDto.UserName, "nom d'utilisateur");
+            
+            user.UserName = updateDto.UserName;
+            user.NormalizedUserName = updateDto.UserName.ToUpperInvariant();
+        }
+
+        // Mettre à jour les autres propriétés
+        if (!string.IsNullOrEmpty(updateDto.FirstName))
+            user.FirstName = updateDto.FirstName;
+
+        if (!string.IsNullOrEmpty(updateDto.LastName))
+            user.LastName = updateDto.LastName;
+
+        if (updateDto.IsActive.HasValue)
+            user.IsActive = updateDto.IsActive.Value;
+
+        if (updateDto.EmployeeId.HasValue)
+            user.EmployeeId = updateDto.EmployeeId;
+
+        // Sauvegarder les modifications
+        var result = await userManager.UpdateAsync(user);
+        if (!result.Succeeded)
+        {
+            var errors = result.Errors.Select(e => e.Description);
+            throw new UserRegistrationException(errors);
+        }
+
+        // Récupérer les rôles et mapper vers UserDto
+        var roles = await userManager.GetRolesAsync(user);
+        var userDto = mapper.Map<UserDto>(user);
+        userDto.Roles = roles;
+
+        return userDto;
+    }
+
+    /// <summary>
+    /// Deletes a user from the system.
+    /// </summary>
+    /// <param name="userId">The unique identifier of the user to delete.</param>
+    /// <returns><c>true</c> if the deletion was successful, otherwise <c>false</c>.</returns>
+    /// <exception cref="KeyNotFoundException">Thrown when the user is not found.</exception>
+    public async Task<bool> DeleteUserAsync(string userId)
+    {
+        var user = await userManager.FindByIdAsync(userId);
+        if (user == null)
+            throw new KeyNotFoundException($"User with ID {userId} not found");
+
+        // Révoquer tous les refresh tokens avant suppression
+        await tokenService.RevokeAllUserRefreshTokensAsync(userId);
+
+        // Supprimer l'utilisateur
+        var result = await userManager.DeleteAsync(user);
+        return result.Succeeded;
+    }
 }
 

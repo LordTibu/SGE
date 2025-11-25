@@ -48,5 +48,28 @@ public interface IAuthService
     /// <param name="userId">The unique identifier of the user whose information is to be retrieved.</param>
     /// <returns>A Task that represents the asynchronous operation. When completed successfully, the task returns a <see cref="UserDto"/> containing details about the user, including their ID, username, email, name, roles, and optional employee ID. Returns null if the user does not exist.</returns>
     Task<UserDto?> GetCurrentUserAsync(string userId);
+
+    /// <summary>
+    /// Updates the roles assigned to a user.
+    /// </summary>
+    /// <param name="userId">The unique identifier of the user whose roles are to be updated.</param>
+    /// <param name="roles">The list of role names to assign to the user.</param>
+    /// <returns>A Task that represents the asynchronous operation. When completed successfully, the task returns a boolean indicating whether the update was successful.</returns>
+    Task<bool> UpdateUserRolesAsync(string userId, IList<string> roles);
+
+    /// <summary>
+    /// Updates the information of an existing user.
+    /// </summary>
+    /// <param name="userId">The unique identifier of the user to update.</param>
+    /// <param name="updateDto">The data transfer object containing the updated user information.</param>
+    /// <returns>A Task that represents the asynchronous operation. When completed successfully, the task returns a <see cref="UserDto"/> containing the updated user information.</returns>
+    Task<UserDto> UpdateUserAsync(string userId, UpdateUserDto updateDto);
+
+    /// <summary>
+    /// Deletes a user from the system.
+    /// </summary>
+    /// <param name="userId">The unique identifier of the user to delete.</param>
+    /// <returns>A Task that represents the asynchronous operation. When completed successfully, the task returns a boolean indicating whether the deletion was successful.</returns>
+    Task<bool> DeleteUserAsync(string userId);
 }
 

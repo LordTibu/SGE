@@ -227,6 +227,128 @@ Content-Type: application/json
 
 ---
 
+### 7. Mettre à jour les rôles d'un utilisateur
+```http
+PUT /api/Auth/users/{userId}/roles
+Authorization: Bearer {access-token}
+Content-Type: application/json
+```
+
+**🔒 Rôle requis :** `Admin`
+
+**Body (JSON) :**
+```json
+{
+  "roles": ["Manager", "User"]
+}
+```
+
+**Rôles disponibles :**
+- `Admin` - Accès complet
+- `Manager` - Gestion des employés et départements
+- `User` - Accès limité
+
+**Réponse (200 OK) :**
+```json
+{
+  "message": "Rôles mis à jour avec succès"
+}
+```
+
+**Exemple : Promouvoir un utilisateur en Manager**
+```json
+{
+  "roles": ["Manager"]
+}
+```
+
+**Exemple : Donner plusieurs rôles**
+```json
+{
+  "roles": ["Manager", "User"]
+}
+```
+
+**Exemple : Retirer tous les rôles**
+```json
+{
+  "roles": []
+}
+```
+
+---
+
+### 8. Mettre à jour les informations d'un utilisateur
+```http
+PUT /api/Auth/users/{userId}
+Authorization: Bearer {access-token}
+Content-Type: application/json
+```
+
+**🔒 Rôle requis :** `Admin`, `Manager`
+
+**Body (JSON) :**
+```json
+{
+  "firstName": "Jean",
+  "lastName": "Dupont",
+  "email": "jean.dupont@example.com",
+  "userName": "jdupont",
+  "isActive": true,
+  "employeeId": 1
+}
+```
+
+**Tous les champs sont optionnels** - Seuls les champs fournis seront mis à jour.
+
+**Réponse (200 OK) :**
+```json
+{
+  "id": "guid-here",
+  "userName": "jdupont",
+  "email": "jean.dupont@example.com",
+  "firstName": "Jean",
+  "lastName": "Dupont",
+  "roles": ["User"],
+  "employeeId": 1
+}
+```
+
+**Exemple : Désactiver un compte utilisateur**
+```json
+{
+  "isActive": false
+}
+```
+
+**Exemple : Changer l'email**
+```json
+{
+  "email": "nouveau.email@example.com"
+}
+```
+
+---
+
+### 9. Supprimer un utilisateur
+```http
+DELETE /api/Auth/users/{userId}
+Authorization: Bearer {access-token}
+```
+
+**🔒 Rôle requis :** `Admin`
+
+**Réponse (200 OK) :**
+```json
+{
+  "message": "Utilisateur supprimé avec succès"
+}
+```
+
+**Note :** La suppression révoque automatiquement tous les refresh tokens de l'utilisateur avant de le supprimer.
+
+---
+
 ## 🏢 Departments
 
 ### 1. Créer un département
@@ -727,6 +849,11 @@ GET /api/LeaveRequests/employee/1/conflicts?startDate=2025-12-15T00:00:00Z&endDa
 | S'inscrire | ✅ | ✅ | ✅ |
 | Se connecter | ✅ | ✅ | ✅ |
 | Rafraîchir token | ✅ | ✅ | ✅ |
+| Voir son profil | ✅ | ✅ | ✅ |
+| Modifier son profil | ✅ | ✅ | ✅ |
+| Modifier les rôles d'un utilisateur | ❌ | ❌ | ✅ |
+| Modifier les infos d'un utilisateur | ❌ | ✅ | ✅ |
+| Supprimer un utilisateur | ❌ | ❌ | ✅ |
 | **Departments** |
 | Voir tous les départements | ❌ | ✅ | ✅ |
 | Voir un département | ✅ | ✅ | ✅ |
@@ -767,6 +894,9 @@ GET /api/LeaveRequests/employee/1/conflicts?startDate=2025-12-15T00:00:00Z&endDa
 | `/api/Auth/me/{userId}` | GET | Authentifié (User/Manager/Admin) |
 | `/api/Auth/logout/{userId}` | POST | Authentifié (User/Manager/Admin) |
 | `/api/Auth/revoke` | POST | Authentifié (User/Manager/Admin) |
+| `/api/Auth/users/{userId}/roles` | PUT | Admin |
+| `/api/Auth/users/{userId}` | PUT | Admin ou Manager |
+| `/api/Auth/users/{userId}` | DELETE | Admin |
 
 #### DepartmentsController (`/api/Departments`)
 | Route | Méthode | Rôle requis |
