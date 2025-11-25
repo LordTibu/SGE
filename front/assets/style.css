@@ -19,6 +19,12 @@ body {
     #f8fafc;
 }
 
+.hero-lead {
+  margin: 0 0 4px;
+  font-size: 1.05rem;
+  color: #0f172a;
+}
+
 .hero {
   padding: 48px 16px 32px;
   max-width: 1100px;
@@ -95,6 +101,18 @@ body {
   box-shadow: 0 12px 30px rgba(15, 23, 42, 0.07);
 }
 
+.card--accent {
+  background: linear-gradient(135deg, #ffffff, #f8fafc);
+  border: 1px solid #dbeafe;
+  box-shadow: 0 20px 40px rgba(37, 99, 235, 0.08);
+}
+
+.card--split .card-columns {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 14px;
+}
+
 .card__header {
   display: flex;
   justify-content: space-between;
@@ -112,6 +130,48 @@ body {
 .table-wrapper {
   overflow-x: auto;
   margin-top: 12px;
+}
+
+.role-routes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.role-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  font-weight: 600;
+}
+
+.role-pill .dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.role-pill[data-role="Admin"] .dot {
+  background: #7c3aed;
+}
+
+.role-pill[data-role="Manager"] .dot {
+  background: #2563eb;
+}
+
+.role-pill[data-role="User"] .dot {
+  background: #0ea5e9;
+}
+
+.role-pill small {
+  display: block;
+  font-weight: 500;
+  color: #475569;
 }
 
 table {
@@ -175,7 +235,25 @@ input {
   transition: border 0.2s, box-shadow 0.2s;
 }
 
+select,
+textarea {
+  padding: 10px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  font-size: 1rem;
+  background: #fff;
+  transition: border 0.2s, box-shadow 0.2s;
+  font-family: inherit;
+}
+
 input:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+}
+
+select:focus,
+textarea:focus {
   outline: none;
   border-color: #2563eb;
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
@@ -217,6 +295,11 @@ input:focus {
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   gap: 12px;
   margin-top: 12px;
+}
+
+.status {
+  margin: 0;
+  font-weight: 600;
 }
 
 /* Login Page Styles */

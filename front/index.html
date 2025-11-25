@@ -12,8 +12,8 @@
   <header class="hero">
     <div class="hero-content">
       <div>
-        <h1>SGE Dashboard</h1>
-        <p>Système de Gestion des Employés</p>
+        <p class="eyebrow">Système de Gestion des Employés</p>
+        <h1>Tableau de bord </h1>
       </div>
       <div class="hero-actions">
         <div id="user-info" class="user-info">
@@ -26,12 +26,11 @@
   </header>
 
   <main class="container">
-    <section class="card">
+    <section class="card" data-role-required="admin,manager">
       <div class="card__header">
         <div>
           <p class="eyebrow">Employees</p>
           <h2>Browse employees</h2>
-          <p>Fetch existing employees from the API and review key details.</p>
         </div>
         <div class="actions">
           <button data-action="refresh-employees" class="primary">Refresh list</button>
@@ -58,12 +57,11 @@
       </div>
     </section>
 
-    <section class="card">
+    <section class="card" data-role-required="admin,manager">
       <div class="card__header">
         <div>
           <p class="eyebrow">Departments</p>
           <h2>Browse departments</h2>
-          <p>Quickly inspect configured departments and their descriptions.</p>
         </div>
         <div class="actions">
           <button data-action="refresh-departments" class="primary">Refresh list</button>
@@ -87,15 +85,15 @@
       </div>
     </section>
 
-    <section class="card">
+    <section class="card" id="attendance-section" data-role-required="user">
       <div class="card__header">
         <div>
           <p class="eyebrow">Attendances</p>
-          <h2>Recent attendances</h2>
-          <p>Check in on attendance records and export data to Excel.</p>
+          <h2 id="attendance-title">Recent attendances</h2>
         </div>
         <div class="actions">
-          <input id="attendance-date" type="date" />
+          <input id="attendance-start-date" type="date" />
+          <input id="attendance-end-date" type="date" />
           <button data-action="refresh-attendances" class="primary">Refresh list</button>
         </div>
       </div>
@@ -119,12 +117,156 @@
       </div>
     </section>
 
-    <section class="card">
+    <section class="card" data-role-required="admin,manager">
+      <div class="card__header">
+        <div>
+          <p class="eyebrow">Daily Employee Attendance</p>
+        </div>
+      </div>
+      <form id="daily-employee-attendance-form" class="form-grid">
+        <label class="input-group">
+          <span>Employee ID</span>
+          <input name="employeeId" type="number" min="1" required />
+        </label>
+        <div class="form-actions">
+          <button type="submit" class="primary">Get Today's Attendance</button>
+          <p id="daily-employee-attendance-status" role="status"></p>
+        </div>
+      </form>
+      <div class="table-wrapper">
+        <table id="daily-employee-attendance-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Employee ID</th>
+              <th>Date</th>
+              <th>Clock In</th>
+              <th>Clock Out</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="placeholder">
+              <td colspan="6">No data loaded yet.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="card" data-role-required="admin,manager">
+      <div class="card__header">
+        <div>
+          <p class="eyebrow">Attendance by Date</p>
+        </div>
+      </div>
+      <form id="attendance-by-date-form" class="form-grid">
+        <label class="input-group">
+          <span>Date</span>
+          <input name="attendanceDate" type="date" required />
+        </label>
+        <div class="form-actions">
+          <button type="submit" class="primary">Get Attendance by Date</button>
+          <p id="attendance-by-date-status" role="status"></p>
+        </div>
+      </form>
+      <div class="table-wrapper">
+        <table id="attendance-by-date-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Employee ID</th>
+              <th>Date</th>
+              <th>Clock In</th>
+              <th>Clock Out</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="placeholder">
+              <td colspan="6">No data loaded yet.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    
+    <section class="card card--split" id="attendance-tools-section">
+      <div class="card__header">
+        <div>
+          <p class="eyebrow">Outils de présence</p>
+        </div>
+      </div>
+
+      <div class="card-columns">
+        <form id="today-attendance-form" class="form-grid">
+          <label class="input-group" data-role-required="admin,manager">
+            <span>Employee ID</span>
+            <input name="employeeId" type="number" min="1" required />
+          </label>
+          <div class="form-actions">
+            <button type="submit" class="primary">Présence du jour</button>
+            <p id="today-attendance-status" class="status" role="status"></p>
+          </div>
+        </form>
+
+        <form id="monthly-hours-form" class="form-grid">
+          <label class="input-group" data-role-required="admin,manager">
+            <span>Employee ID</span>
+            <input name="employeeId" type="number" min="1" required />
+          </label>
+          <label class="input-group">
+            <span>Mois</span>
+            <input name="month" type="number" min="1" max="12" required />
+          </label>
+          <label class="input-group">
+            <span>Année</span>
+            <input name="year" type="number" min="2000" required />
+          </label>
+          <div class="form-actions">
+            <button type="submit" class="secondary">Heures totales</button>
+            <p id="monthly-hours-status" class="status" role="status"></p>
+          </div>
+        </form>
+
+        <form id="manual-attendance-form" class="form-grid" data-role-required="admin,manager">
+          <label class="input-group" data-role-required="admin,manager">
+            <span>Employee ID</span>
+            <input name="employeeId" type="number" min="1" required />
+          </label>
+          <label class="input-group">
+            <span>Date</span>
+            <input name="date" type="date" required />
+          </label>
+          <label class="input-group">
+            <span>Clock In</span>
+            <input name="clockIn" type="time" />
+          </label>
+          <label class="input-group">
+            <span>Clock Out</span>
+            <input name="clockOut" type="time" />
+          </label>
+          <label class="input-group">
+            <span>Break (hours)</span>
+            <input name="breakDurationHours" type="number" step="0.25" min="0" value="0" />
+          </label>
+          <label class="input-group">
+            <span>Notes</span>
+            <input name="notes" placeholder="Optionnel" />
+          </label>
+          <div class="form-actions">
+            <button type="submit" class="primary">Créer un pointage</button>
+            <p id="manual-attendance-status" class="status" role="status"></p>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <section class="card" data-role-required="admin">
       <div class="card__header">
         <div>
           <p class="eyebrow">Create</p>
           <h2>Add an employee</h2>
-          <p>Use this quick form to create an employee with the required fields.</p>
         </div>
       </div>
       <form id="employee-form" class="form-grid">
@@ -176,11 +318,10 @@
         <div>
           <p class="eyebrow">Clock In/Out</p>
           <h2>Attendance tracking</h2>
-          <p>Record your clock-in and clock-out times.</p>
         </div>
       </div>
       <form id="attendance-form" class="form-grid">
-        <label class="input-group">
+        <label class="input-group" data-role-required="admin,manager">
           <span>Employee ID</span>
           <input name="employeeId" type="number" min="1" required />
         </label>
@@ -196,12 +337,11 @@
       </form>
     </section>
 
-    <section class="card">
+    <section class="card" id="leave-requests-section">
       <div class="card__header">
         <div>
           <p class="eyebrow">Leave Requests</p>
-          <h2>Request time off</h2>
-          <p>Create and manage your leave requests.</p>
+          <h2 id="leave-title">Request time off</h2>
         </div>
         <div class="actions">
           <button data-action="refresh-leave-requests" class="primary">Refresh list</button>
@@ -228,7 +368,7 @@
         </table>
       </div>
       <form id="leave-request-form" class="form-grid">
-        <label class="input-group">
+        <label class="input-group" data-role-required="admin,manager">
           <span>Employee ID</span>
           <input name="employeeId" type="number" min="1" required />
         </label>
@@ -261,6 +401,90 @@
           <p id="leave-request-status" role="status"></p>
         </div>
       </form>
+    </section>
+
+    <section class="card card--split" id="leave-tools-section">
+      <div class="card__header">
+        <div>
+          <p class="eyebrow">Outils congés</p>
+        </div>
+      </div>
+
+      <div class="card-columns">
+        <form id="leave-status-filter-form" class="form-grid" data-role-required="admin,manager">
+          <label class="input-group">
+            <span>Statut</span>
+            <select name="status" required>
+              <option value="">-- Choisir --</option>
+              <option value="1">Pending</option>
+              <option value="2">Approved</option>
+              <option value="3">Rejected</option>
+              <option value="4">Cancelled</option>
+            </select>
+          </label>
+          <div class="form-actions">
+            <button type="submit" class="secondary">Filtrer</button>
+            <p id="leave-status-filter" class="status" role="status"></p>
+          </div>
+        </form>
+
+        <form id="leave-update-form" class="form-grid" data-role-required="admin,manager">
+          <label class="input-group">
+            <span>Request ID</span>
+            <input name="requestId" type="number" min="1" required />
+          </label>
+          <label class="input-group">
+            <span>Nouveau statut</span>
+            <select name="status" required>
+              <option value="2">Approved</option>
+              <option value="3">Rejected</option>
+              <option value="4">Cancelled</option>
+            </select>
+          </label>
+          <label class="input-group">
+            <span>Commentaire manager</span>
+            <input name="managerComments" placeholder="Optionnel" />
+          </label>
+          <div class="form-actions">
+            <button type="submit" class="primary">Mettre à jour</button>
+            <p id="leave-update-status" class="status" role="status"></p>
+          </div>
+        </form>
+
+        <form id="leave-remaining-form" class="form-grid">
+          <label class="input-group" data-role-required="admin,manager">
+            <span>Employee ID</span>
+            <input name="employeeId" type="number" min="1" required />
+          </label>
+          <label class="input-group">
+            <span>Année</span>
+            <input name="year" type="number" min="2000" required />
+          </label>
+          <div class="form-actions">
+            <button type="submit" class="secondary">Solde restant</button>
+            <p id="leave-remaining-status" class="status" role="status"></p>
+          </div>
+        </form>
+
+        <form id="leave-conflict-form" class="form-grid">
+          <label class="input-group" data-role-required="admin,manager">
+            <span>Employee ID</span>
+            <input name="employeeId" type="number" min="1" required />
+          </label>
+          <label class="input-group">
+            <span>Date de début</span>
+            <input name="startDate" type="date" required />
+          </label>
+          <label class="input-group">
+            <span>Date de fin</span>
+            <input name="endDate" type="date" required />
+          </label>
+          <div class="form-actions">
+            <button type="submit" class="secondary">Vérifier les conflits</button>
+            <p id="leave-conflict-status" class="status" role="status"></p>
+          </div>
+        </form>
+      </div>
     </section>
   </main>
 
