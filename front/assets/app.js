@@ -19,6 +19,14 @@ const monthlyHoursStatus = document.querySelector("#monthly-hours-status");
 const manualAttendanceForm = document.querySelector("#manual-attendance-form");
 const manualAttendanceStatus = document.querySelector("#manual-attendance-status");
 
+const dailyEmployeeAttendanceForm = document.querySelector("#daily-employee-attendance-form");
+const dailyEmployeeAttendanceStatus = document.querySelector("#daily-employee-attendance-status");
+const dailyEmployeeAttendanceTable = document.querySelector("#daily-employee-attendance-table tbody");
+
+const attendanceByDateForm = document.querySelector("#attendance-by-date-form");
+const attendanceByDateStatus = document.querySelector("#attendance-by-date-status");
+const attendanceByDateTable = document.querySelector("#attendance-by-date-table tbody");
+
 const leaveStatusFilterForm = document.querySelector("#leave-status-filter-form");
 const leaveStatusFilterStatus = document.querySelector("#leave-status-filter");
 const leaveUpdateForm = document.querySelector("#leave-update-form");
@@ -77,7 +85,19 @@ function checkAuthentication() {
 
 function hasRole(role) {
   if (!state.user || !state.user.roles) return false;
-  return state.user.roles.includes(role);
+
+  const normalize = (r) =>
+    String(r || "")
+      .trim()
+      .toLowerCase();
+
+  const normalizedRoles = new Set(state.user.roles.map(normalize));
+
+  if (Array.isArray(role)) {
+    return role.some((r) => normalizedRoles.has(normalize(r)));
+  }
+
+  return normalizedRoles.has(normalize(role));
 }
 
 function hasAnyRole(roles) {
@@ -196,7 +216,7 @@ function updateUserLabel() {
 }
 
 function getEmployeeIdFromState() {
-  return state.user?.employeeId || state.user?.id;
+  return state.user?.employeeId;
 }
 
 function prefillEmployeeIds() {
@@ -416,6 +436,61 @@ async function loadMonthlyHours(employeeId, year, month) {
   }
 }
 
+async function loadDailyEmployeeAttendance(employeeId) {
+  setStatus(dailyEmployeeAttendanceStatus, "Chargement en cours...");
+  try {
+    const attendance = await apiFetch(`/api/Attendances/employee/${employeeId}/today`);
+    
+    if (!attendance) {
+      setPlaceholder(dailyEmployeeAttendanceTable, "Aucune présence trouvée pour aujourd'hui.");
+      setStatus(dailyEmployeeAttendanceStatus, "Aucune présence trouvée.");
+      return;
+    }
+
+    dailyEmployeeAttendanceTable.innerHTML = `
+      <tr>
+        <td>${attendance.id}</td>
+        <td>${attendance.employeeId}</td>
+        <td>${attendance.date?.split("T")[0] ?? ""}</td>
+        <td>${attendance.clockIn ?? "-"}</td>
+        <td>${attendance.clockOut ?? "-"}</td>
+        <td>${attendance.notes ?? ""}</td>
+      </tr>
+    `;
+    setStatus(dailyEmployeeAttendanceStatus, "Présence chargée.", true);
+  } catch (error) {
+    setStatus(dailyEmployeeAttendanceStatus, `Erreur: ${error.message}`, false);
+    setPlaceholder(dailyEmployeeAttendanceTable, `Erreur: ${error.message}`);
+  }
+}
+
+async function loadAttendancesByDate(dateString) {
+  setStatus(attendanceByDateStatus, "Chargement en cours...");
+  try {
+    const attendances = await apiFetch(`/api/Attendances/date/${dateString}`);
+    
+    if (Array.isArray(attendances) && attendances.length > 0) {
+      attendanceByDateTable.innerHTML = attendances.map(attendance => `
+        <tr>
+          <td>${attendance.id}</td>
+          <td>${attendance.employeeId}</td>
+          <td>${attendance.date?.split("T")[0] ?? ""}</td>
+          <td>${attendance.clockIn ?? "-"}</td>
+          <td>${attendance.clockOut ?? "-"}</td>
+          <td>${attendance.notes ?? ""}</td>
+        </tr>
+      `).join("");
+      setStatus(attendanceByDateStatus, `${attendances.length} attendance(s) chargée(s).`, true);
+    } else {
+      setPlaceholder(attendanceByDateTable, "Aucune présence trouvée pour cette date.");
+      setStatus(attendanceByDateStatus, "Aucune présence trouvée.", true);
+    }
+  } catch (error) {
+    setStatus(attendanceByDateStatus, `Erreur: ${error.message}`, false);
+    setPlaceholder(attendanceByDateTable, `Erreur: ${error.message}`);
+  }
+}
+
 async function createManualAttendance(payload) {
   setStatus(manualAttendanceStatus, "Envoi en cours...");
   try {
@@ -547,6 +622,28 @@ monthlyHoursForm?.addEventListener("submit", async (event) => {
   const month = monthlyHoursForm.querySelector('input[name="month"]')?.value;
   const year = monthlyHoursForm.querySelector('input[name="year"]')?.value;
   await loadMonthlyHours(Number(employeeId), Number(year), Number(month));
+});
+
+dailyEmployeeAttendanceForm?.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  if (!ensureAuthenticated()) {
+    setStatus(dailyEmployeeAttendanceStatus, "Connectez-vous pour consulter la présence.", false);
+    return;
+  }
+  const employeeId = dailyEmployeeAttendanceForm.querySelector('input[name="employeeId"]')?.value;
+  await loadDailyEmployeeAttendance(Number(employeeId));
+});
+
+attendanceByDateForm?.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  if (!ensureAuthenticated()) {
+    setStatus(attendanceByDateStatus, "Connectez-vous pour consulter la présence.", false);
+    return;
+  }
+  const date = attendanceByDateForm.querySelector('input[name="attendanceDate"]')?.value;
+  if (date) {
+    await loadAttendancesByDate(date);
+  }
 });
 
 manualAttendanceForm?.addEventListener("submit", async (event) => {

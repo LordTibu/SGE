@@ -13,11 +13,7 @@
     <div class="hero-content">
       <div>
         <p class="eyebrow">Système de Gestion des Employés</p>
-        <h1>Tableau de bord unifié</h1>
-        <p class="hero-lead">
-          Des raccourcis adaptés à chaque rôle pour suivre les présences, gérer les congés
-          et piloter les équipes en toute simplicité.
-        </p>
+        <h1>Tableau de bord </h1>
       </div>
       <div class="hero-actions">
         <div id="user-info" class="user-info">
@@ -30,17 +26,6 @@
   </header>
 
   <main class="container">
-    <section class="card card--accent" id="role-routes-card">
-      <div class="card__header">
-        <div>
-          <p class="eyebrow">Accès</p>
-          <h2>Vos routes disponibles</h2>
-          <p class="hint">Les actions visibles sont calculées en fonction de vos rôles (Admin, Manager ou Collaborateur).</p>
-        </div>
-      </div>
-      <div id="role-routes" class="role-routes"></div>
-    </section>
-
     <section class="card" data-role-required="admin,manager">
       <div class="card__header">
         <div>
@@ -100,7 +85,7 @@
       </div>
     </section>
 
-    <section class="card" id="attendance-section">
+    <section class="card" id="attendance-section" data-role-required="user">
       <div class="card__header">
         <div>
           <p class="eyebrow">Attendances</p>
@@ -132,18 +117,90 @@
       </div>
     </section>
 
+    <section class="card" data-role-required="admin,manager">
+      <div class="card__header">
+        <div>
+          <p class="eyebrow">Daily Employee Attendance</p>
+        </div>
+      </div>
+      <form id="daily-employee-attendance-form" class="form-grid">
+        <label class="input-group">
+          <span>Employee ID</span>
+          <input name="employeeId" type="number" min="1" required />
+        </label>
+        <div class="form-actions">
+          <button type="submit" class="primary">Get Today's Attendance</button>
+          <p id="daily-employee-attendance-status" role="status"></p>
+        </div>
+      </form>
+      <div class="table-wrapper">
+        <table id="daily-employee-attendance-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Employee ID</th>
+              <th>Date</th>
+              <th>Clock In</th>
+              <th>Clock Out</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="placeholder">
+              <td colspan="6">No data loaded yet.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="card" data-role-required="admin,manager">
+      <div class="card__header">
+        <div>
+          <p class="eyebrow">Attendance by Date</p>
+        </div>
+      </div>
+      <form id="attendance-by-date-form" class="form-grid">
+        <label class="input-group">
+          <span>Date</span>
+          <input name="attendanceDate" type="date" required />
+        </label>
+        <div class="form-actions">
+          <button type="submit" class="primary">Get Attendance by Date</button>
+          <p id="attendance-by-date-status" role="status"></p>
+        </div>
+      </form>
+      <div class="table-wrapper">
+        <table id="attendance-by-date-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Employee ID</th>
+              <th>Date</th>
+              <th>Clock In</th>
+              <th>Clock Out</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="placeholder">
+              <td colspan="6">No data loaded yet.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    
     <section class="card card--split" id="attendance-tools-section">
       <div class="card__header">
         <div>
           <p class="eyebrow">Outils de présence</p>
-          <h2>Consulter ou compléter les pointages</h2>
-          <p class="hint">Accès rapide aux routes quotidiennes, aux heures mensuelles et à la création manuelle.</p>
         </div>
       </div>
 
       <div class="card-columns">
         <form id="today-attendance-form" class="form-grid">
-          <label class="input-group">
+          <label class="input-group" data-role-required="admin,manager">
             <span>Employee ID</span>
             <input name="employeeId" type="number" min="1" required />
           </label>
@@ -151,11 +208,10 @@
             <button type="submit" class="primary">Présence du jour</button>
             <p id="today-attendance-status" class="status" role="status"></p>
           </div>
-          <p class="hint">Utilise la route <code>/api/Attendances/employee/{id}/today</code>.</p>
         </form>
 
         <form id="monthly-hours-form" class="form-grid">
-          <label class="input-group">
+          <label class="input-group" data-role-required="admin,manager">
             <span>Employee ID</span>
             <input name="employeeId" type="number" min="1" required />
           </label>
@@ -171,11 +227,10 @@
             <button type="submit" class="secondary">Heures totales</button>
             <p id="monthly-hours-status" class="status" role="status"></p>
           </div>
-          <p class="hint">Utilise la route <code>/api/Attendances/employee/{id}/hours/{year}/{month}</code>.</p>
         </form>
 
         <form id="manual-attendance-form" class="form-grid" data-role-required="admin,manager">
-          <label class="input-group">
+          <label class="input-group" data-role-required="admin,manager">
             <span>Employee ID</span>
             <input name="employeeId" type="number" min="1" required />
           </label>
@@ -203,7 +258,6 @@
             <button type="submit" class="primary">Créer un pointage</button>
             <p id="manual-attendance-status" class="status" role="status"></p>
           </div>
-          <p class="hint">Utilise la route <code>/api/Attendances</code> (Admin/Manager).</p>
         </form>
       </div>
     </section>
@@ -213,7 +267,6 @@
         <div>
           <p class="eyebrow">Create</p>
           <h2>Add an employee</h2>
-          <p>Use this quick form to create an employee with the required fields.</p>
         </div>
       </div>
       <form id="employee-form" class="form-grid">
@@ -265,11 +318,10 @@
         <div>
           <p class="eyebrow">Clock In/Out</p>
           <h2>Attendance tracking</h2>
-          <p>Record your clock-in and clock-out times.</p>
         </div>
       </div>
       <form id="attendance-form" class="form-grid">
-        <label class="input-group">
+        <label class="input-group" data-role-required="admin,manager">
           <span>Employee ID</span>
           <input name="employeeId" type="number" min="1" required />
         </label>
@@ -316,7 +368,7 @@
         </table>
       </div>
       <form id="leave-request-form" class="form-grid">
-        <label class="input-group">
+        <label class="input-group" data-role-required="admin,manager">
           <span>Employee ID</span>
           <input name="employeeId" type="number" min="1" required />
         </label>
@@ -355,8 +407,6 @@
       <div class="card__header">
         <div>
           <p class="eyebrow">Outils congés</p>
-          <h2>Approver, suivre et vérifier les soldes</h2>
-          <p class="hint">Activez les routes avancées pour compléter le suivi des absences.</p>
         </div>
       </div>
 
@@ -376,7 +426,6 @@
             <button type="submit" class="secondary">Filtrer</button>
             <p id="leave-status-filter" class="status" role="status"></p>
           </div>
-          <p class="hint">Utilise la route <code>/api/LeaveRequests/status/{status}</code>.</p>
         </form>
 
         <form id="leave-update-form" class="form-grid" data-role-required="admin,manager">
@@ -400,11 +449,10 @@
             <button type="submit" class="primary">Mettre à jour</button>
             <p id="leave-update-status" class="status" role="status"></p>
           </div>
-          <p class="hint">Utilise la route <code>/api/LeaveRequests/{id}/status</code>.</p>
         </form>
 
         <form id="leave-remaining-form" class="form-grid">
-          <label class="input-group">
+          <label class="input-group" data-role-required="admin,manager">
             <span>Employee ID</span>
             <input name="employeeId" type="number" min="1" required />
           </label>
@@ -416,11 +464,10 @@
             <button type="submit" class="secondary">Solde restant</button>
             <p id="leave-remaining-status" class="status" role="status"></p>
           </div>
-          <p class="hint">Utilise la route <code>/api/LeaveRequests/employee/{id}/remaining/{year}</code>.</p>
         </form>
 
         <form id="leave-conflict-form" class="form-grid">
-          <label class="input-group">
+          <label class="input-group" data-role-required="admin,manager">
             <span>Employee ID</span>
             <input name="employeeId" type="number" min="1" required />
           </label>
@@ -436,7 +483,6 @@
             <button type="submit" class="secondary">Vérifier les conflits</button>
             <p id="leave-conflict-status" class="status" role="status"></p>
           </div>
-          <p class="hint">Utilise la route <code>/api/LeaveRequests/employee/{id}/conflicts</code>.</p>
         </form>
       </div>
     </section>
