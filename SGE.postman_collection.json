@@ -5,9 +5,184 @@
     "_postman_id": "d8f9a4f8-9b1c-4a3e-9fe2-000000000001"
   },
   "variable": [
-    { "key": "baseUrl", "value": "http://localhost:5222" }
+    { "key": "baseUrl", "value": "http://localhost:5000" },
+    { "key": "accessToken", "value": "" },
+    { "key": "refreshToken", "value": "" },
+    { "key": "userId", "value": "" }
   ],
   "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "POST Register",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "url": "{{baseUrl}}/api/Auth/register",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\",\n  \"email\": \"john.doe@example.com\",\n  \"userName\": \"johndoe\",\n  \"password\": \"Password123!\",\n  \"employeeId\": null\n}"
+            }
+          },
+          "event": [{"listen": "test", "script": {"type": "text/javascript", "exec": [
+            "pm.expect([200,400,409]).to.include(pm.response.code);",
+            "if (pm.response.code === 200) {",
+            "  var jsonData = pm.response.json();",
+            "  pm.collectionVariables.set('accessToken', jsonData.accessToken);",
+            "  pm.collectionVariables.set('refreshToken', jsonData.refreshToken);",
+            "  pm.collectionVariables.set('userId', jsonData.user.id);",
+            "}"
+          ]}}]
+        },
+        {
+          "name": "POST Login",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "url": "{{baseUrl}}/api/Auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@example.com\",\n  \"password\": \"Admin123!\"\n}"
+            }
+          },
+          "event": [{"listen": "test", "script": {"type": "text/javascript", "exec": [
+            "pm.expect([200,401]).to.include(pm.response.code);",
+            "if (pm.response.code === 200) {",
+            "  var jsonData = pm.response.json();",
+            "  pm.collectionVariables.set('accessToken', jsonData.accessToken);",
+            "  pm.collectionVariables.set('refreshToken', jsonData.refreshToken);",
+            "  pm.collectionVariables.set('userId', jsonData.user.id);",
+            "}"
+          ]}}]
+        },
+        {
+          "name": "POST Refresh Token",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "url": "{{baseUrl}}/api/Auth/refresh",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"accessToken\": \"{{accessToken}}\",\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+            }
+          },
+          "event": [{"listen": "test", "script": {"type": "text/javascript", "exec": [
+            "pm.expect([200,400,401]).to.include(pm.response.code);",
+            "if (pm.response.code === 200) {",
+            "  var jsonData = pm.response.json();",
+            "  pm.collectionVariables.set('accessToken', jsonData.accessToken);",
+            "  pm.collectionVariables.set('refreshToken', jsonData.refreshToken);",
+            "}"
+          ]}}]
+        },
+        {
+          "name": "GET Current User",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{accessToken}}"}],
+            "url": "{{baseUrl}}/api/Auth/me/{{userId}}"
+          },
+          "event": [{"listen": "test", "script": {"type": "text/javascript", "exec": [
+            "pm.expect([200,401,404]).to.include(pm.response.code);"
+          ]}}]
+        },
+        {
+          "name": "POST Logout",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Authorization", "value": "Bearer {{accessToken}}"}],
+            "url": "{{baseUrl}}/api/Auth/logout/{{userId}}"
+          },
+          "event": [{"listen": "test", "script": {"type": "text/javascript", "exec": [
+            "pm.expect([200,401,404]).to.include(pm.response.code);"
+          ]}}]
+        },
+        {
+          "name": "POST Revoke Token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{accessToken}}"},
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "url": "{{baseUrl}}/api/Auth/revoke",
+            "body": {
+              "mode": "raw",
+              "raw": "\"{{refreshToken}}\""
+            }
+          },
+          "event": [{"listen": "test", "script": {"type": "text/javascript", "exec": [
+            "pm.expect([200,400,401]).to.include(pm.response.code);"
+          ]}}]
+        },
+        {
+          "name": "PUT Update User Roles",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{accessToken}}"},
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "url": "{{baseUrl}}/api/Auth/users/{{userId}}/roles",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"roles\": [\"Manager\"]\n}"
+            }
+          },
+          "event": [{"listen": "test", "script": {"type": "text/javascript", "exec": [
+            "pm.expect([200,400,401,403,404]).to.include(pm.response.code);"
+          ]}}]
+        },
+        {
+          "name": "PUT Update User",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{accessToken}}"},
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "url": "{{baseUrl}}/api/Auth/users/{{userId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Jean\",\n  \"lastName\": \"Dupont\",\n  \"email\": \"jean.dupont@example.com\",\n  \"userName\": \"jdupont\",\n  \"isActive\": true,\n  \"employeeId\": 1\n}"
+            }
+          },
+          "event": [{"listen": "test", "script": {"type": "text/javascript", "exec": [
+            "pm.expect([200,400,401,403,404,409]).to.include(pm.response.code);"
+          ]}}]
+        },
+        {
+          "name": "PUT Update User (Partial - Disable Account)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{accessToken}}"},
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "url": "{{baseUrl}}/api/Auth/users/{{userId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"isActive\": false\n}"
+            }
+          },
+          "event": [{"listen": "test", "script": {"type": "text/javascript", "exec": [
+            "pm.expect([200,400,401,403,404]).to.include(pm.response.code);"
+          ]}}]
+        },
+        {
+          "name": "DELETE User",
+          "request": {
+            "method": "DELETE",
+            "header": [{"key": "Authorization", "value": "Bearer {{accessToken}}"}],
+            "url": "{{baseUrl}}/api/Auth/users/{{userId}}"
+          },
+          "event": [{"listen": "test", "script": {"type": "text/javascript", "exec": [
+            "pm.expect([200,400,401,403,404]).to.include(pm.response.code);"
+          ]}}]
+        }
+      ]
+    },
     {
       "name": "Employees",
       "item": [
@@ -15,6 +190,7 @@
           "name": "GET All Employees",
           "request": {
             "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{accessToken}}"}],
             "url": "{{baseUrl}}/api/Employees"
           },
           "event": [
@@ -28,21 +204,33 @@
         },
         {
           "name": "GET Employee by Id",
-          "request": {"method": "GET","url": "{{baseUrl}}/api/Employees/1"},
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{accessToken}}"}],
+            "url": "{{baseUrl}}/api/Employees/1"
+          },
           "event": [{"listen": "test","script": {"type": "text/javascript","exec": [
             "pm.expect([200,404]).to.include(pm.response.code);"
           ]}}]
         },
         {
           "name": "GET Employee by Email",
-          "request": {"method": "GET","url": "{{baseUrl}}/api/Employees/by-email/test@example.com"},
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{accessToken}}"}],
+            "url": "{{baseUrl}}/api/Employees/by-email/test@example.com"
+          },
           "event": [{"listen": "test","script": {"type": "text/javascript","exec": [
             "pm.expect([200,404]).to.include(pm.response.code);"
           ]}}]
         },
         {
           "name": "GET Employees by Department",
-          "request": {"method": "GET","url": "{{baseUrl}}/api/Employees/by-department/1"},
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{accessToken}}"}],
+            "url": "{{baseUrl}}/api/Employees/by-department/1"
+          },
           "event": [{"listen": "test","script": {"type": "text/javascript","exec": [
             "pm.test('Status is 200', function () { pm.response.to.have.status(200); });"
           ]}}]
@@ -51,7 +239,10 @@
           "name": "POST Create Employee",
           "request": {
             "method": "POST",
-            "header": [{"key": "Content-Type","value": "application/json"}],
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{accessToken}}"},
+              {"key": "Content-Type","value": "application/json"}
+            ],
             "url": "{{baseUrl}}/api/Employees",
             "body": {
               "mode": "raw",
@@ -66,7 +257,10 @@
           "name": "PATCH Update Employee",
           "request": {
             "method": "PATCH",
-            "header": [{"key": "Content-Type","value": "application/json"}],
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{accessToken}}"},
+              {"key": "Content-Type","value": "application/json"}
+            ],
             "url": "{{baseUrl}}/api/Employees/1",
             "body": {"mode": "raw","raw": "{\n  \"phoneNumber\": \"+33987654321\",\n  \"address\": \"2 Rue Mise a Jour, Lyon\",\n  \"position\": \"Senior Engineer\",\n  \"salary\": 60000,\n  \"departmentId\": 1\n}"}
           },
@@ -76,14 +270,22 @@
         },
         {
           "name": "DELETE Employee",
-          "request": {"method": "DELETE","url": "{{baseUrl}}/api/Employees/1"},
+          "request": {
+            "method": "DELETE",
+            "header": [{"key": "Authorization", "value": "Bearer {{accessToken}}"}],
+            "url": "{{baseUrl}}/api/Employees/1"
+          },
           "event": [{"listen": "test","script": {"type": "text/javascript","exec": [
             "pm.expect([204,404]).to.include(pm.response.code);"
           ]}}]
         },
         {
           "name": "GET Export Employees to Excel",
-          "request": {"method": "GET","url": "{{baseUrl}}/api/Employees/export/excel"},
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{accessToken}}"}],
+            "url": "{{baseUrl}}/api/Employees/export/excel"
+          },
           "event": [{"listen": "test","script": {"type": "text/javascript","exec": [
             "pm.test('Status is 200', function () { pm.response.to.have.status(200); });"
           ]}}]
@@ -92,6 +294,7 @@
           "name": "POST Import Employees (form-data)",
           "request": {
             "method": "POST",
+            "header": [{"key": "Authorization", "value": "Bearer {{accessToken}}"}],
             "url": "{{baseUrl}}/api/Employees/import",
             "body": {
               "mode": "formdata",
@@ -109,11 +312,11 @@
     {
       "name": "Departments",
       "item": [
-        {"name": "GET All Departments","request": {"method": "GET","url": "{{baseUrl}}/api/Departments"},"event": [{"listen": "test","script": {"type": "text/javascript","exec": ["pm.test('Status is 200', function () { pm.response.to.have.status(200); });"]}}]},
-        {"name": "GET Department by Id","request": {"method": "GET","url": "{{baseUrl}}/api/Departments/1"},"event": [{"listen": "test","script": {"type": "text/javascript","exec": ["pm.expect([200,404]).to.include(pm.response.code);"]}}]},
-        {"name": "POST Create Department","request": {"method": "POST","header": [{"key": "Content-Type","value": "application/json"}],"url": "{{baseUrl}}/api/Departments","body": {"mode": "raw","raw": "{\n  \"name\": \"R&D\",\n  \"code\": \"RD\",\n  \"description\": \"Research and Development\"\n}"}},"event": [{"listen": "test","script": {"type": "text/javascript","exec": ["pm.test('Status is 201', function () { pm.response.to.have.status(201); });"]}}]},
-        {"name": "PUT Update Department","request": {"method": "PUT","header": [{"key": "Content-Type","value": "application/json"}],"url": "{{baseUrl}}/api/Departments/1","body": {"mode": "raw","raw": "{\n  \"name\": \"Engineering\",\n  \"description\": \"All engineering teams\"\n}"}},"event": [{"listen": "test","script": {"type": "text/javascript","exec": ["pm.expect([204,404]).to.include(pm.response.code);"]}}]},
-        {"name": "DELETE Department","request": {"method": "DELETE","url": "{{baseUrl}}/api/Departments/1"},"event": [{"listen": "test","script": {"type": "text/javascript","exec": ["pm.expect([204,404]).to.include(pm.response.code);"]}}]}
+        {"name": "GET All Departments","request": {"method": "GET","header": [{"key": "Authorization", "value": "Bearer {{accessToken}}"}],"url": "{{baseUrl}}/api/Departments"},"event": [{"listen": "test","script": {"type": "text/javascript","exec": ["pm.test('Status is 200', function () { pm.response.to.have.status(200); });"]}}]},
+        {"name": "GET Department by Id","request": {"method": "GET","header": [{"key": "Authorization", "value": "Bearer {{accessToken}}"}],"url": "{{baseUrl}}/api/Departments/1"},"event": [{"listen": "test","script": {"type": "text/javascript","exec": ["pm.expect([200,404]).to.include(pm.response.code);"]}}]},
+        {"name": "POST Create Department","request": {"method": "POST","header": [{"key": "Authorization", "value": "Bearer {{accessToken}}"},{"key": "Content-Type","value": "application/json"}],"url": "{{baseUrl}}/api/Departments","body": {"mode": "raw","raw": "{\n  \"name\": \"R&D\",\n  \"code\": \"RD\",\n  \"description\": \"Research and Development\"\n}"}},"event": [{"listen": "test","script": {"type": "text/javascript","exec": ["pm.test('Status is 201', function () { pm.response.to.have.status(201); });"]}}]},
+        {"name": "PUT Update Department","request": {"method": "PUT","header": [{"key": "Authorization", "value": "Bearer {{accessToken}}"},{"key": "Content-Type","value": "application/json"}],"url": "{{baseUrl}}/api/Departments/1","body": {"mode": "raw","raw": "{\n  \"name\": \"Engineering\",\n  \"description\": \"All engineering teams\"\n}"}},"event": [{"listen": "test","script": {"type": "text/javascript","exec": ["pm.expect([204,404]).to.include(pm.response.code);"]}}]},
+        {"name": "DELETE Department","request": {"method": "DELETE","header": [{"key": "Authorization", "value": "Bearer {{accessToken}}"}],"url": "{{baseUrl}}/api/Departments/1"},"event": [{"listen": "test","script": {"type": "text/javascript","exec": ["pm.expect([204,404]).to.include(pm.response.code);"]}}]}
       ]
     },
     {
@@ -123,7 +326,10 @@
           "name": "POST Clock In",
           "request": {
             "method": "POST",
-            "header": [{"key": "Content-Type","value": "application/json"}],
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{accessToken}}"},
+              {"key": "Content-Type","value": "application/json"}
+            ],
             "url": "{{baseUrl}}/api/Attendances/clock-in",
             "body": {"mode": "raw","raw": "{\n  \"employeeId\": 1,\n  \"dateTime\": \"{{$isoTimestamp}}\",\n  \"notes\": \"Arrived on time\"\n}"}
           },
@@ -135,7 +341,10 @@
           "name": "POST Clock Out",
           "request": {
             "method": "POST",
-            "header": [{"key": "Content-Type","value": "application/json"}],
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{accessToken}}"},
+              {"key": "Content-Type","value": "application/json"}
+            ],
             "url": "{{baseUrl}}/api/Attendances/clock-out",
             "body": {"mode": "raw","raw": "{\n  \"employeeId\": 1,\n  \"dateTime\": \"{{$isoTimestamp}}\",\n  \"notes\": \"Leaving\"\n}"}
           },
@@ -147,7 +356,10 @@
           "name": "POST Create Attendance",
           "request": {
             "method": "POST",
-            "header": [{"key": "Content-Type","value": "application/json"}],
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{accessToken}}"},
+              {"key": "Content-Type","value": "application/json"}
+            ],
             "url": "{{baseUrl}}/api/Attendances",
             "body": {"mode": "raw","raw": "{\n  \"employeeId\": 1,\n  \"date\": \"2025-11-05\",\n  \"clockIn\": \"08:30:00\",\n  \"clockOut\": \"17:30:00\",\n  \"breakDurationHours\": 1,\n  \"notes\": \"Regular day\"\n}"}
           },
@@ -157,14 +369,21 @@
         },
         {
           "name": "GET Attendance by Id",
-          "request": {"method": "GET","url": "{{baseUrl}}/api/Attendances/1"},
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{accessToken}}"}],
+            "url": "{{baseUrl}}/api/Attendances/1"
+          },
           "event": [{"listen": "test","script": {"type": "text/javascript","exec": [
             "pm.expect([200,404]).to.include(pm.response.code);"
           ]}}]
         },
         {
           "name": "GET Employee Attendances (with range)",
-          "request": {"method": "GET","url": {
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{accessToken}}"}],
+            "url": {
             "raw": "{{baseUrl}}/api/Attendances/employee/1?startDate=2025-11-01&endDate=2025-11-30",
             "host": ["{{baseUrl}}"],
             "path": ["api","Attendances","employee","1"],
@@ -179,21 +398,33 @@
         },
         {
           "name": "GET Attendances by Date",
-          "request": {"method": "GET","url": "{{baseUrl}}/api/Attendances/date/2025-11-05"},
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{accessToken}}"}],
+            "url": "{{baseUrl}}/api/Attendances/date/2025-11-05"
+          },
           "event": [{"listen": "test","script": {"type": "text/javascript","exec": [
             "pm.test('Status is 200', function () { pm.response.to.have.status(200); });"
           ]}}]
         },
         {
           "name": "GET Today Attendance",
-          "request": {"method": "GET","url": "{{baseUrl}}/api/Attendances/employee/1/today"},
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{accessToken}}"}],
+            "url": "{{baseUrl}}/api/Attendances/employee/1/today"
+          },
           "event": [{"listen": "test","script": {"type": "text/javascript","exec": [
             "pm.expect([200,404]).to.include(pm.response.code);"
           ]}}]
         },
         {
           "name": "GET Monthly Worked Hours",
-          "request": {"method": "GET","url": "{{baseUrl}}/api/Attendances/employee/1/hours/2025/11"},
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{accessToken}}"}],
+            "url": "{{baseUrl}}/api/Attendances/employee/1/hours/2025/11"
+          },
           "event": [{"listen": "test","script": {"type": "text/javascript","exec": [
             "pm.test('Status is 200', function () { pm.response.to.have.status(200); });"
           ]}}]
@@ -207,7 +438,10 @@
           "name": "POST Create Leave Request",
           "request": {
             "method": "POST",
-            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{accessToken}}"},
+              {"key": "Content-Type", "value": "application/json"}
+            ],
             "url": "{{baseUrl}}/api/LeaveRequests",
             "body": {
               "mode": "raw",
@@ -222,6 +456,7 @@
           "name": "GET Leave Request by Id",
           "request": {
             "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{accessToken}}"}],
             "url": "{{baseUrl}}/api/LeaveRequests/1"
           },
           "event": [{"listen": "test", "script": {"type": "text/javascript", "exec": [
@@ -232,6 +467,7 @@
           "name": "GET Leave Requests by Employee",
           "request": {
             "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{accessToken}}"}],
             "url": "{{baseUrl}}/api/LeaveRequests/employee/1"
           },
           "event": [{"listen": "test", "script": {"type": "text/javascript", "exec": [
@@ -242,6 +478,7 @@
           "name": "GET Leave Requests by Status (Pending)",
           "request": {
             "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{accessToken}}"}],
             "url": "{{baseUrl}}/api/LeaveRequests/status/1"
           },
           "event": [{"listen": "test", "script": {"type": "text/javascript", "exec": [
@@ -252,6 +489,7 @@
           "name": "GET Leave Requests by Status (Approved)",
           "request": {
             "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{accessToken}}"}],
             "url": "{{baseUrl}}/api/LeaveRequests/status/2"
           },
           "event": [{"listen": "test", "script": {"type": "text/javascript", "exec": [
@@ -262,6 +500,7 @@
           "name": "GET Pending Leave Requests",
           "request": {
             "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{accessToken}}"}],
             "url": "{{baseUrl}}/api/LeaveRequests/pending"
           },
           "event": [{"listen": "test", "script": {"type": "text/javascript", "exec": [
@@ -272,7 +511,10 @@
           "name": "PUT Approve Leave Request",
           "request": {
             "method": "PUT",
-            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{accessToken}}"},
+              {"key": "Content-Type", "value": "application/json"}
+            ],
             "url": "{{baseUrl}}/api/LeaveRequests/1/status",
             "body": {
               "mode": "raw",
@@ -287,7 +529,10 @@
           "name": "PUT Reject Leave Request",
           "request": {
             "method": "PUT",
-            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{accessToken}}"},
+              {"key": "Content-Type", "value": "application/json"}
+            ],
             "url": "{{baseUrl}}/api/LeaveRequests/1/status",
             "body": {
               "mode": "raw",
@@ -302,6 +547,7 @@
           "name": "GET Remaining Leave Days",
           "request": {
             "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{accessToken}}"}],
             "url": "{{baseUrl}}/api/LeaveRequests/employee/1/remaining/2025"
           },
           "event": [{"listen": "test", "script": {"type": "text/javascript", "exec": [
@@ -312,6 +558,7 @@
           "name": "GET Check Conflicts",
           "request": {
             "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{accessToken}}"}],
             "url": {
               "raw": "{{baseUrl}}/api/LeaveRequests/employee/1/conflicts?startDate=2025-12-15T00:00:00Z&endDate=2025-12-20T00:00:00Z",
               "host": ["{{baseUrl}}"],
@@ -330,7 +577,10 @@
           "name": "POST Create Sick Leave",
           "request": {
             "method": "POST",
-            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{accessToken}}"},
+              {"key": "Content-Type", "value": "application/json"}
+            ],
             "url": "{{baseUrl}}/api/LeaveRequests",
             "body": {
               "mode": "raw",
