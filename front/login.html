@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SGE - Login</title>
+  <link rel="stylesheet" href="./assets/style.css" />
+</head>
+
+<body>
+  <div class="login-container">
+    <div class="login-card">
+      <div class="login-header">
+        <h1>SGE</h1>
+        <p>Système de Gestion des Employés</p>
+      </div>
+
+      <form id="login-form" class="login-form">
+        <div class="form-group">
+          <label for="api-base-login">API Base URL</label>
+          <input 
+            id="api-base-login" 
+            type="url" 
+            placeholder="http://localhost:5222"
+            autocomplete="url"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="email">Email</label>
+          <input 
+            id="email" 
+            name="email" 
+            type="email" 
+            placeholder="admin@example.com"
+            autocomplete="email"
+            required 
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="password">Mot de passe</label>
+          <input 
+            id="password" 
+            name="password" 
+            type="password" 
+            placeholder="Password123!"
+            autocomplete="current-password"
+            required 
+          />
+        </div>
+
+        <div id="login-status" class="status-message"></div>
+
+        <button type="submit" class="login-button">Se connecter</button>
+      </form>
+
+      <div class="login-hints">
+        <p><strong>Compte Admin:</strong></p>
+        <p>Email: <code>admin@example.com</code></p>
+        <p>Password: <code>Admin123!</code></p>
+        <hr />
+        <p><strong>Compte Manager:</strong></p>
+        <p>Email: <code>manager@example.com</code></p>
+        <p>Password: <code>Manager123!</code></p>
+      </div>
+    </div>
+  </div>
+
+  <script src="./assets/login.js"></script>
+</body>
+
+</html>
