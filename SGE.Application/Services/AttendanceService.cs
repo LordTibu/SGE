@@ -311,5 +311,55 @@ namespace SGE.Application.Services
                 attendance.OvertimeHours = workedHours - normalWorkingHours;
             }
         }
+        
+        public async Task<AttendanceDto> UpdateAttendanceAsync(
+            int id, 
+            AttendanceUpdateDto updateDto, 
+            CancellationToken cancellationToken)
+        {
+            // Récupérer l'attendance existante
+            var attendance = await attendanceRepository.GetByIdAsync(id, cancellationToken);
+            if (attendance == null)
+            {
+                throw new NotFoundException($"Attendance avec l'ID {id} introuvable.");
+            }
+
+            // Vérifier que l'employé existe
+            var employee = await employeeRepository.GetByIdAsync(updateDto.EmployeeId, cancellationToken);
+            if (employee == null)
+            {
+                throw new NotFoundException($"Employé avec l'ID {updateDto.EmployeeId} introuvable.");
+            }
+
+            // Validation: ClockOutTime doit être après ClockInTime
+            if (updateDto.ClockInTime.HasValue && updateDto.ClockOutTime.HasValue)
+            {
+                if (updateDto.ClockOutTime <= updateDto.ClockInTime)
+                {
+                    throw new ValidationException("EndDate","L'heure de sortie doit être postérieure à l'heure d'entrée.");
+                }
+            }
+
+            // Mettre à jour les propriétés
+            attendance.EmployeeId = updateDto.EmployeeId;
+            attendance.Date = DateTime.SpecifyKind(updateDto.Date.Date, DateTimeKind.Utc);
+            attendance.ClockIn = updateDto.ClockInTime;  // Adapter selon votre modèle
+            attendance.ClockOut = updateDto.ClockOutTime; // Adapter selon votre modèle
+            attendance.Notes = updateDto.Notes;
+            attendance.UpdatedAt = DateTime.UtcNow;
+
+            // Calculer les heures travaillées
+            CalculateWorkedHours(attendance);
+
+            // Sauvegarder les modifications
+            await attendanceRepository.UpdateAsync(attendance, cancellationToken);
+
+            // Mapper et retourner le résultat
+            var dto = mapper.Map<AttendanceDto>(attendance);
+            if (employee != null)
+                dto.EmployeeName = $"{employee.FirstName} {employee.LastName}";
+    
+            return dto;
+        }
     }
 }

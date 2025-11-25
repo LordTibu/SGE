@@ -134,5 +134,15 @@ namespace SGE.Application.Interfaces.Services
             int month,
             CancellationToken cancellationToken = default
         );
+
+        /// <summary>
+        /// Updates an existing attendance record.
+        /// </summary>
+        /// <param name="id">The ID of the attendance record to update.</param>
+        /// <param name="updateDto">The updated attendance data.</param>
+        /// <param name="cancellationToken">Cancellation token.</param>
+        /// <returns>The updated attendance record.</returns>
+        Task<AttendanceDto> UpdateAttendanceAsync(int id, AttendanceUpdateDto updateDto,
+            CancellationToken cancellationToken);
     }
 }
