@@ -428,6 +428,25 @@
           </div>
         </form>
 
+        <form id="leave-type-filter-form" class="form-grid" data-role-required="admin,manager">
+          <label class="input-group">
+            <span>Type de congé</span>
+            <select name="leaveType" required>
+              <option value="">-- Tous --</option>
+              <option value="1">Annual</option>
+              <option value="2">Sick</option>
+              <option value="3">Maternity</option>
+              <option value="4">Paternity</option>
+              <option value="5">Personal</option>
+              <option value="6">Unpaid</option>
+            </select>
+          </label>
+          <div class="form-actions">
+            <button type="submit" class="secondary">Voir tous les types</button>
+            <p id="leave-type-filter-status" class="status" role="status"></p>
+          </div>
+        </form>
+
         <form id="leave-update-form" class="form-grid" data-role-required="admin,manager">
           <label class="input-group">
             <span>Request ID</span>

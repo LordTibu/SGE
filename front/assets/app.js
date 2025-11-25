@@ -29,6 +29,8 @@ const attendanceByDateTable = document.querySelector("#attendance-by-date-table 
 
 const leaveStatusFilterForm = document.querySelector("#leave-status-filter-form");
 const leaveStatusFilterStatus = document.querySelector("#leave-status-filter");
+const leaveTypeFilterForm = document.querySelector("#leave-type-filter-form");
+const leaveTypeFilterStatus = document.querySelector("#leave-type-filter-status");
 const leaveUpdateForm = document.querySelector("#leave-update-form");
 const leaveUpdateStatus = document.querySelector("#leave-update-status");
 const leaveRemainingForm = document.querySelector("#leave-remaining-form");
@@ -768,6 +770,35 @@ leaveStatusFilterForm?.addEventListener("submit", async (event) => {
     setStatus(leaveStatusFilterStatus, "Filtre appliqué.");
   } catch (error) {
     setStatus(leaveStatusFilterStatus, `Erreur: ${error.message}`, false);
+  }
+});
+
+leaveTypeFilterForm?.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  if (!state.accessToken) {
+    setStatus(leaveTypeFilterStatus, "Connectez-vous avec un compte autorisé.", false);
+    return;
+  }
+
+  const leaveTypeValue = leaveTypeFilterForm.querySelector("select[name='leaveType']")?.value;
+  setStatus(leaveTypeFilterStatus, "Chargement...");
+  try {
+    let leaveRequests;
+    if (leaveTypeValue === "") {
+      // Load all pending requests if "Tous" is selected
+      leaveRequests = await apiFetch(`/api/LeaveRequests/pending`);
+    } else {
+      // Filter by type using status endpoint then filter client-side by type
+      // Since we might not have a direct API endpoint for type filtering,
+      // we'll fetch pending requests and filter by type
+      const allRequests = await apiFetch(`/api/LeaveRequests/pending`);
+      leaveRequests = allRequests.filter(req => String(req.leaveType) === leaveTypeValue);
+    }
+    renderLeaveRequestsTable(leaveRequests);
+    const typeLabel = leaveTypeMap[leaveTypeValue] || "All types";
+    setStatus(leaveTypeFilterStatus, `${leaveRequests.length} request(s) of type ${typeLabel}.`);
+  } catch (error) {
+    setStatus(leaveTypeFilterStatus, `Erreur: ${error.message}`, false);
   }
 });
 
