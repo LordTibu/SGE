@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SGE.Application.DTOs.Attendances;
 using SGE.Application.Interfaces.Services;
+using SGE.Core.Exceptions;
 
 namespace SGE.API.Controllers
 {
@@ -27,8 +28,15 @@ namespace SGE.API.Controllers
         [HttpPost("clock-in")]
         [ProducesResponseType(200, Type = typeof(AttendanceDto))]
         [ProducesResponseType(400)]
-        public async Task<ActionResult<AttendanceDto>> ClockIn([FromBody] ClockInOutDto clockInDto, CancellationToken cancellationToken)
+        public async Task<ActionResult<AttendanceDto>> ClockIn([FromBody] ClockInOutDto clockInDto,
+            CancellationToken cancellationToken)
         {
+            if (clockInDto.DateTime < DateTime.Today)
+            {
+                throw new InvalidDateException(
+                    "Impossible de pointer pour une date antérieure. Seule la date du jour est autorisée.");
+            }
+
             var attendance = await _attendanceService.ClockInAsync(clockInDto, cancellationToken);
             return Ok(attendance);
         }
@@ -39,8 +47,15 @@ namespace SGE.API.Controllers
         [HttpPost("clock-out")]
         [ProducesResponseType(200, Type = typeof(AttendanceDto))]
         [ProducesResponseType(400)]
-        public async Task<ActionResult<AttendanceDto>> ClockOut([FromBody] ClockInOutDto clockOutDto, CancellationToken cancellationToken)
+        public async Task<ActionResult<AttendanceDto>> ClockOut([FromBody] ClockInOutDto clockOutDto,
+            CancellationToken cancellationToken)
         {
+            if (clockOutDto.DateTime < DateTime.Today)
+            {
+                throw new InvalidDateException(
+                    "Impossible de Depointer pour une date antérieure.");
+            }
+
             var attendance = await _attendanceService.ClockOutAsync(clockOutDto, cancellationToken);
             return Ok(attendance);
         }
@@ -86,7 +101,9 @@ namespace SGE.API.Controllers
             [FromQuery] DateTime? endDate = null,
             CancellationToken cancellationToken = default)
         {
-            var attendances = await _attendanceService.GetAttendancesByEmployeeAsync(employeeId, startDate, endDate, cancellationToken);
+            var attendances =
+                await _attendanceService.GetAttendancesByEmployeeAsync(employeeId, startDate, endDate,
+                    cancellationToken);
             return Ok(attendances);
         }
 
@@ -96,7 +113,8 @@ namespace SGE.API.Controllers
         [HttpGet("date/{date:datetime}")]
         [Authorize(Roles = "Admin,Manager")] // Vue globale réservée aux Admin/Manager
         [ProducesResponseType(200, Type = typeof(IEnumerable<AttendanceDto>))]
-        public async Task<ActionResult<IEnumerable<AttendanceDto>>> GetAttendancesByDate(DateTime date, CancellationToken cancellationToken)
+        public async Task<ActionResult<IEnumerable<AttendanceDto>>> GetAttendancesByDate(DateTime date,
+            CancellationToken cancellationToken)
         {
             var attendances = await _attendanceService.GetAttendancesByDateAsync(date, cancellationToken);
             return Ok(attendances);
@@ -108,7 +126,8 @@ namespace SGE.API.Controllers
         [HttpGet("employee/{employeeId:int}/today")]
         [ProducesResponseType(200, Type = typeof(AttendanceDto))]
         [ProducesResponseType(404)]
-        public async Task<ActionResult<AttendanceDto>> GetTodayAttendance(int employeeId, CancellationToken cancellationToken)
+        public async Task<ActionResult<AttendanceDto>> GetTodayAttendance(int employeeId,
+            CancellationToken cancellationToken)
         {
             var attendance = await _attendanceService.GetTodayAttendanceAsync(employeeId, cancellationToken);
             if (attendance == null)
@@ -125,7 +144,8 @@ namespace SGE.API.Controllers
         public async Task<ActionResult<decimal>> GetMonthlyHours(
             int employeeId, int year, int month, CancellationToken cancellationToken)
         {
-            var totalHours = await _attendanceService.GetMonthlyWorkedHoursAsync(employeeId, year, month, cancellationToken);
+            var totalHours =
+                await _attendanceService.GetMonthlyWorkedHoursAsync(employeeId, year, month, cancellationToken);
             return Ok(totalHours);
         }
     }
