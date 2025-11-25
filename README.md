@@ -1129,6 +1129,11 @@ docker compose up -d
 http://localhost:5000
 ```
 
+### Le front seras accèsible sur
+```
+http://localhost:4173
+```
+
 ### Compte administrateur par défaut
 - **Email :** `admin@example.com`
 - **Password :** `Admin123!`
