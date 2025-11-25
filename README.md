@@ -106,6 +106,11 @@ Content-Type: application/json
 }
 ```
 
+**Compte manager par défaut :**
+- Email: `manager@example.com`
+- Password: `Manager123!`
+- Rôle: `Manager`
+
 **Compte admin par défaut :**
 - Email: `admin@example.com`
 - Password: `Admin123!`

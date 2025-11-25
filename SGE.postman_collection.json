@@ -187,7 +187,7 @@
       "name": "Employees",
       "item": [
         {
-          "name": "GET All Employees",
+          "name": "POST Register",
           "request": {
             "method": "GET",
             "header": [{"key": "Authorization", "value": "Bearer {{accessToken}}"}],
@@ -196,11 +196,59 @@
           "event": [
             {
               "listen": "test",
-              "script": {"type": "text/javascript", "exec": [
-                "pm.test('Status is 200', function () { pm.response.to.have.status(200); });"
-              ]}
+              "script": { "type": "text/javascript", "exec": [
+                "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                "var json = pm.response.json();",
+                "if (json.accessToken) pm.environment.set('accessToken', json.accessToken);",
+                "if (json.refreshToken) pm.environment.set('refreshToken', json.refreshToken);"
+              ] }
             }
           ]
+        },
+        {
+          "name": "POST Revoke Token",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/Auth/revoke",
+            "body": { "mode": "raw", "raw": "\"{{refreshToken}}\"" }
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.expect([200,401]).to.include(pm.response.code);"] } }]
+        },
+        {
+          "name": "POST Logout",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": "{{baseUrl}}/api/Auth/logout/{{userId}}"
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.expect([200,401]).to.include(pm.response.code);"] } }]
+        },
+        {
+          "name": "GET Me",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": "{{baseUrl}}/api/Auth/me/{{userId}}"
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.expect([200,404,401]).to.include(pm.response.code);"] } }]
+        }
+      ]
+    },
+    {
+      "name": "Employees",
+      "item": [
+        {
+          "name": "GET All Employees",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": "{{baseUrl}}/api/Employees"
+          },
+          "event": [{"listen": "test","script": {"type": "text/javascript","exec": ["pm.test('Status is 200', function () { pm.response.to.have.status(200); });"]}}]
         },
         {
           "name": "GET Employee by Id",
@@ -244,14 +292,9 @@
               {"key": "Content-Type","value": "application/json"}
             ],
             "url": "{{baseUrl}}/api/Employees",
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\",\n  \"email\": \"john.doe@example.com\",\n  \"phoneNumber\": \"+33123456789\",\n  \"address\": \"1 Rue Exemple, Paris\",\n  \"position\": \"Engineer\",\n  \"salary\": 55000,\n  \"hireDate\": \"2025-01-10T00:00:00\",\n  \"departmentId\": 1\n}"
-            }
+            "body": {"mode": "raw","raw": "{\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\",\n  \"email\": \"john.doe@example.com\",\n  \"phoneNumber\": \"+33123456789\",\n  \"address\": \"1 Rue Exemple, Paris\",\n  \"position\": \"Engineer\",\n  \"salary\": 55000,\n  \"hireDate\": \"2025-01-10T00:00:00\",\n  \"departmentId\": 1\n}"}
           },
-          "event": [{"listen": "test","script": {"type": "text/javascript","exec": [
-            "pm.test('Status is 201', function () { pm.response.to.have.status(201); });"
-          ]}}]
+          "event": [{"listen": "test","script": {"type": "text/javascript","exec": ["pm.test('Status is 201', function () { pm.response.to.have.status(201); });"]}}]
         },
         {
           "name": "PATCH Update Employee",
@@ -264,9 +307,7 @@
             "url": "{{baseUrl}}/api/Employees/1",
             "body": {"mode": "raw","raw": "{\n  \"phoneNumber\": \"+33987654321\",\n  \"address\": \"2 Rue Mise a Jour, Lyon\",\n  \"position\": \"Senior Engineer\",\n  \"salary\": 60000,\n  \"departmentId\": 1\n}"}
           },
-          "event": [{"listen": "test","script": {"type": "text/javascript","exec": [
-            "pm.expect([204,404]).to.include(pm.response.code);"
-          ]}}]
+          "event": [{"listen": "test","script": {"type": "text/javascript","exec": ["pm.expect([204,404]).to.include(pm.response.code);"]}}]
         },
         {
           "name": "DELETE Employee",
@@ -296,16 +337,9 @@
             "method": "POST",
             "header": [{"key": "Authorization", "value": "Bearer {{accessToken}}"}],
             "url": "{{baseUrl}}/api/Employees/import",
-            "body": {
-              "mode": "formdata",
-              "formdata": [
-                {"key": "file", "type": "file", "src": []}
-              ]
-            }
+            "body": {"mode": "formdata","formdata": [{"key": "file", "type": "file", "src": []}]}
           },
-          "event": [{"listen": "test","script": {"type": "text/javascript","exec": [
-            "pm.test('Status is 200', function () { pm.response.to.have.status(200); });"
-          ]}}]
+          "event": [{"listen": "test","script": {"type": "text/javascript","exec": ["pm.test('Status is 200', function () { pm.response.to.have.status(200); });"]}}]
         }
       ]
     },
@@ -333,9 +367,7 @@
             "url": "{{baseUrl}}/api/Attendances/clock-in",
             "body": {"mode": "raw","raw": "{\n  \"employeeId\": 1,\n  \"dateTime\": \"{{$isoTimestamp}}\",\n  \"notes\": \"Arrived on time\"\n}"}
           },
-          "event": [{"listen": "test","script": {"type": "text/javascript","exec": [
-            "pm.expect([200,404,400]).to.include(pm.response.code);"
-          ]}}]
+          "event": [{"listen": "test","script": {"type": "text/javascript","exec": ["pm.expect([200,404,400]).to.include(pm.response.code);"]}}]
         },
         {
           "name": "POST Clock Out",
@@ -348,9 +380,7 @@
             "url": "{{baseUrl}}/api/Attendances/clock-out",
             "body": {"mode": "raw","raw": "{\n  \"employeeId\": 1,\n  \"dateTime\": \"{{$isoTimestamp}}\",\n  \"notes\": \"Leaving\"\n}"}
           },
-          "event": [{"listen": "test","script": {"type": "text/javascript","exec": [
-            "pm.expect([200,404,400]).to.include(pm.response.code);"
-          ]}}]
+          "event": [{"listen": "test","script": {"type": "text/javascript","exec": ["pm.expect([200,404,400]).to.include(pm.response.code);"]}}]
         },
         {
           "name": "POST Create Attendance",
@@ -363,9 +393,7 @@
             "url": "{{baseUrl}}/api/Attendances",
             "body": {"mode": "raw","raw": "{\n  \"employeeId\": 1,\n  \"date\": \"2025-11-05\",\n  \"clockIn\": \"08:30:00\",\n  \"clockOut\": \"17:30:00\",\n  \"breakDurationHours\": 1,\n  \"notes\": \"Regular day\"\n}"}
           },
-          "event": [{"listen": "test","script": {"type": "text/javascript","exec": [
-            "pm.expect([201,404,409]).to.include(pm.response.code);"
-          ]}}]
+          "event": [{"listen": "test","script": {"type": "text/javascript","exec": ["pm.expect([201,404,409]).to.include(pm.response.code);"]}}]
         },
         {
           "name": "GET Attendance by Id",
@@ -443,14 +471,9 @@
               {"key": "Content-Type", "value": "application/json"}
             ],
             "url": "{{baseUrl}}/api/LeaveRequests",
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"employeeId\": 1,\n  \"leaveType\": 1,\n  \"startDate\": \"2025-12-15T00:00:00Z\",\n  \"endDate\": \"2025-12-20T00:00:00Z\",\n  \"reason\": \"Vacances de fin d'année\"\n}"
-            }
+            "body": {"mode": "raw","raw": "{\n  \"employeeId\": 1,\n  \"leaveType\": 1,\n  \"startDate\": \"2025-12-15T00:00:00Z\",\n  \"endDate\": \"2025-12-20T00:00:00Z\",\n  \"reason\": \"Vacances de fin d'année\"\n}"}
           },
-          "event": [{"listen": "test", "script": {"type": "text/javascript", "exec": [
-            "pm.expect([201,404,400,409]).to.include(pm.response.code);"
-          ]}}]
+          "event": [{"listen": "test", "script": {"type": "text/javascript", "exec": ["pm.expect([201,404,400,409]).to.include(pm.response.code);"]}}]
         },
         {
           "name": "GET Leave Request by Id",
@@ -516,14 +539,9 @@
               {"key": "Content-Type", "value": "application/json"}
             ],
             "url": "{{baseUrl}}/api/LeaveRequests/1/status",
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"status\": 2,\n  \"managerComments\": \"Approuvé - Bonnes vacances !\"\n}"
-            }
+            "body": {"mode": "raw","raw": "{\n  \"status\": 2,\n  \"managerComments\": \"Approuvé - Bonnes vacances !\"\n}"}
           },
-          "event": [{"listen": "test", "script": {"type": "text/javascript", "exec": [
-            "pm.expect([204,404,400]).to.include(pm.response.code);"
-          ]}}]
+          "event": [{"listen": "test", "script": {"type": "text/javascript", "exec": ["pm.expect([204,404,400]).to.include(pm.response.code);"]}}]
         },
         {
           "name": "PUT Reject Leave Request",
@@ -534,14 +552,9 @@
               {"key": "Content-Type", "value": "application/json"}
             ],
             "url": "{{baseUrl}}/api/LeaveRequests/1/status",
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"status\": 3,\n  \"managerComments\": \"Rejeté - Période trop chargée\"\n}"
-            }
+            "body": {"mode": "raw","raw": "{\n  \"status\": 3,\n  \"managerComments\": \"Rejeté - Période trop chargée\"\n}"}
           },
-          "event": [{"listen": "test", "script": {"type": "text/javascript", "exec": [
-            "pm.expect([204,404,400]).to.include(pm.response.code);"
-          ]}}]
+          "event": [{"listen": "test", "script": {"type": "text/javascript", "exec": ["pm.expect([204,404,400]).to.include(pm.response.code);"]}}]
         },
         {
           "name": "GET Remaining Leave Days",
@@ -582,14 +595,9 @@
               {"key": "Content-Type", "value": "application/json"}
             ],
             "url": "{{baseUrl}}/api/LeaveRequests",
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"employeeId\": 1,\n  \"leaveType\": 2,\n  \"startDate\": \"2025-11-25T00:00:00Z\",\n  \"endDate\": \"2025-11-27T00:00:00Z\",\n  \"reason\": \"Grippe\"\n}"
-            }
+            "body": {"mode": "raw","raw": "{\n  \"employeeId\": 1,\n  \"leaveType\": 2,\n  \"startDate\": \"2025-11-25T00:00:00Z\",\n  \"endDate\": \"2025-11-27T00:00:00Z\",\n  \"reason\": \"Grippe\"\n}"}
           },
-          "event": [{"listen": "test", "script": {"type": "text/javascript", "exec": [
-            "pm.expect([201,404,400,409]).to.include(pm.response.code);"
-          ]}}]
+          "event": [{"listen": "test", "script": {"type": "text/javascript", "exec": ["pm.expect([201,404,400,409]).to.include(pm.response.code);"]}}]
         }
       ]
     }
