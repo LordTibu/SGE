@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 using SGE.API.Middleware;
 using SGE.Application.Interfaces.Repositories;
 using SGE.Application.Interfaces.Services;
@@ -98,6 +99,37 @@ builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 
 builder.Services.AddControllers();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(options =>
+{
+    options.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Title = "SGE API",
+        Version = "v1",
+        Description = "Documentation de l'API du Système de Gestion des Employés"
+    });
+
+    var securityScheme = new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Description = "Entrez le token JWT sans le préfixe 'Bearer '.",
+        In = ParameterLocation.Header,
+        Type = SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT",
+        Reference = new OpenApiReference
+        {
+            Type = ReferenceType.SecurityScheme,
+            Id = "Bearer"
+        }
+    };
+
+    options.AddSecurityDefinition("Bearer", securityScheme);
+    options.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        { securityScheme, Array.Empty<string>() }
+    });
+});
 
 builder.Services.AddCors(options =>
 {
@@ -108,8 +140,6 @@ builder.Services.AddCors(options =>
             .AllowAnyHeader());
 });
 
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddOpenApi();
 var app = builder.Build();
 
 // Seed des données initiales (rôles et admin)
@@ -120,13 +150,14 @@ using (var scope = app.Services.CreateScope())
     await ApplicationDbContextSeed.SeedAdminAsync(userManager, roleManager);
 }
 
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.MapOpenApi();
-}
-
 app.UseMiddleware<GlobalExceptionHandlingMiddleware>();
+app.UseSwagger();
+app.UseSwaggerUI(options =>
+{
+    options.SwaggerEndpoint("/swagger/v1/swagger.json", "SGE API v1");
+    options.RoutePrefix = "swagger";
+});
+
 app.UseHttpsRedirection();
 app.UseCors("AllowAll");
 app.UseAuthentication();

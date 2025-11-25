@@ -12,8 +12,12 @@
   <header class="hero">
     <div class="hero-content">
       <div>
-        <h1>SGE Dashboard</h1>
-        <p>Système de Gestion des Employés</p>
+        <p class="eyebrow">Système de Gestion des Employés</p>
+        <h1>Tableau de bord unifié</h1>
+        <p class="hero-lead">
+          Des raccourcis adaptés à chaque rôle pour suivre les présences, gérer les congés
+          et piloter les équipes en toute simplicité.
+        </p>
       </div>
       <div class="hero-actions">
         <div id="user-info" class="user-info">
@@ -26,6 +30,17 @@
   </header>
 
   <main class="container">
+    <section class="card card--accent" id="role-routes-card">
+      <div class="card__header">
+        <div>
+          <p class="eyebrow">Accès</p>
+          <h2>Vos routes disponibles</h2>
+          <p class="hint">Les actions visibles sont calculées en fonction de vos rôles (Admin, Manager ou Collaborateur).</p>
+        </div>
+      </div>
+      <div id="role-routes" class="role-routes"></div>
+    </section>
+
     <section class="card" data-role-required="admin,manager">
       <div class="card__header">
         <div>
@@ -114,6 +129,82 @@
             </tr>
           </tbody>
         </table>
+      </div>
+    </section>
+
+    <section class="card card--split" id="attendance-tools-section">
+      <div class="card__header">
+        <div>
+          <p class="eyebrow">Outils de présence</p>
+          <h2>Consulter ou compléter les pointages</h2>
+          <p class="hint">Accès rapide aux routes quotidiennes, aux heures mensuelles et à la création manuelle.</p>
+        </div>
+      </div>
+
+      <div class="card-columns">
+        <form id="today-attendance-form" class="form-grid">
+          <label class="input-group">
+            <span>Employee ID</span>
+            <input name="employeeId" type="number" min="1" required />
+          </label>
+          <div class="form-actions">
+            <button type="submit" class="primary">Présence du jour</button>
+            <p id="today-attendance-status" class="status" role="status"></p>
+          </div>
+          <p class="hint">Utilise la route <code>/api/Attendances/employee/{id}/today</code>.</p>
+        </form>
+
+        <form id="monthly-hours-form" class="form-grid">
+          <label class="input-group">
+            <span>Employee ID</span>
+            <input name="employeeId" type="number" min="1" required />
+          </label>
+          <label class="input-group">
+            <span>Mois</span>
+            <input name="month" type="number" min="1" max="12" required />
+          </label>
+          <label class="input-group">
+            <span>Année</span>
+            <input name="year" type="number" min="2000" required />
+          </label>
+          <div class="form-actions">
+            <button type="submit" class="secondary">Heures totales</button>
+            <p id="monthly-hours-status" class="status" role="status"></p>
+          </div>
+          <p class="hint">Utilise la route <code>/api/Attendances/employee/{id}/hours/{year}/{month}</code>.</p>
+        </form>
+
+        <form id="manual-attendance-form" class="form-grid" data-role-required="admin,manager">
+          <label class="input-group">
+            <span>Employee ID</span>
+            <input name="employeeId" type="number" min="1" required />
+          </label>
+          <label class="input-group">
+            <span>Date</span>
+            <input name="date" type="date" required />
+          </label>
+          <label class="input-group">
+            <span>Clock In</span>
+            <input name="clockIn" type="time" />
+          </label>
+          <label class="input-group">
+            <span>Clock Out</span>
+            <input name="clockOut" type="time" />
+          </label>
+          <label class="input-group">
+            <span>Break (hours)</span>
+            <input name="breakDurationHours" type="number" step="0.25" min="0" value="0" />
+          </label>
+          <label class="input-group">
+            <span>Notes</span>
+            <input name="notes" placeholder="Optionnel" />
+          </label>
+          <div class="form-actions">
+            <button type="submit" class="primary">Créer un pointage</button>
+            <p id="manual-attendance-status" class="status" role="status"></p>
+          </div>
+          <p class="hint">Utilise la route <code>/api/Attendances</code> (Admin/Manager).</p>
+        </form>
       </div>
     </section>
 
@@ -258,6 +349,96 @@
           <p id="leave-request-status" role="status"></p>
         </div>
       </form>
+    </section>
+
+    <section class="card card--split" id="leave-tools-section">
+      <div class="card__header">
+        <div>
+          <p class="eyebrow">Outils congés</p>
+          <h2>Approver, suivre et vérifier les soldes</h2>
+          <p class="hint">Activez les routes avancées pour compléter le suivi des absences.</p>
+        </div>
+      </div>
+
+      <div class="card-columns">
+        <form id="leave-status-filter-form" class="form-grid" data-role-required="admin,manager">
+          <label class="input-group">
+            <span>Statut</span>
+            <select name="status" required>
+              <option value="">-- Choisir --</option>
+              <option value="1">Pending</option>
+              <option value="2">Approved</option>
+              <option value="3">Rejected</option>
+              <option value="4">Cancelled</option>
+            </select>
+          </label>
+          <div class="form-actions">
+            <button type="submit" class="secondary">Filtrer</button>
+            <p id="leave-status-filter" class="status" role="status"></p>
+          </div>
+          <p class="hint">Utilise la route <code>/api/LeaveRequests/status/{status}</code>.</p>
+        </form>
+
+        <form id="leave-update-form" class="form-grid" data-role-required="admin,manager">
+          <label class="input-group">
+            <span>Request ID</span>
+            <input name="requestId" type="number" min="1" required />
+          </label>
+          <label class="input-group">
+            <span>Nouveau statut</span>
+            <select name="status" required>
+              <option value="2">Approved</option>
+              <option value="3">Rejected</option>
+              <option value="4">Cancelled</option>
+            </select>
+          </label>
+          <label class="input-group">
+            <span>Commentaire manager</span>
+            <input name="managerComments" placeholder="Optionnel" />
+          </label>
+          <div class="form-actions">
+            <button type="submit" class="primary">Mettre à jour</button>
+            <p id="leave-update-status" class="status" role="status"></p>
+          </div>
+          <p class="hint">Utilise la route <code>/api/LeaveRequests/{id}/status</code>.</p>
+        </form>
+
+        <form id="leave-remaining-form" class="form-grid">
+          <label class="input-group">
+            <span>Employee ID</span>
+            <input name="employeeId" type="number" min="1" required />
+          </label>
+          <label class="input-group">
+            <span>Année</span>
+            <input name="year" type="number" min="2000" required />
+          </label>
+          <div class="form-actions">
+            <button type="submit" class="secondary">Solde restant</button>
+            <p id="leave-remaining-status" class="status" role="status"></p>
+          </div>
+          <p class="hint">Utilise la route <code>/api/LeaveRequests/employee/{id}/remaining/{year}</code>.</p>
+        </form>
+
+        <form id="leave-conflict-form" class="form-grid">
+          <label class="input-group">
+            <span>Employee ID</span>
+            <input name="employeeId" type="number" min="1" required />
+          </label>
+          <label class="input-group">
+            <span>Date de début</span>
+            <input name="startDate" type="date" required />
+          </label>
+          <label class="input-group">
+            <span>Date de fin</span>
+            <input name="endDate" type="date" required />
+          </label>
+          <div class="form-actions">
+            <button type="submit" class="secondary">Vérifier les conflits</button>
+            <p id="leave-conflict-status" class="status" role="status"></p>
+          </div>
+          <p class="hint">Utilise la route <code>/api/LeaveRequests/employee/{id}/conflicts</code>.</p>
+        </form>
+      </div>
     </section>
   </main>
 
